@@ -14,8 +14,6 @@ from tkinter import messagebox
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 import threading
-import json
-import re
 
 from . import (FONT_FAMILY, COLOR_BG_TEXT, COLOR_BG_TEXT_ALT,
                COLOR_FG_MAIN, COLOR_FG_DIM, COLOR_BG_PANEL,
@@ -26,21 +24,7 @@ from . import (FONT_FAMILY, COLOR_BG_TEXT, COLOR_BG_TEXT_ALT,
                CARD_BG, CARD_OUTLINE, CARD_TITLE_FG)
 from ..engine import GameEngine
 from ..vocab import NARRATIVE_STYLES, is_alone, is_world_event
-from ..game_state import GameState, MEMORY_CONSOLIDATE_THRESHOLD, parse_time_passed
-from ..api_client import call_main, call_main_json, call_lightweight, call_main_stream, set_debug_mode, is_debug_mode
-from ..prompts import (
-    P1_SYSTEM, build_p1_user,
-    P2_SYSTEM, build_p2_user,
-    P3_SYSTEM, build_p3_user,
-    P4_SYSTEM, build_p4_user,
-    P4C_SYSTEM, build_p4c_user,
-    P5_SYSTEM, build_p5_user,
-    P6_SYSTEM, build_p6_user,
-    P11_SYSTEM, build_p11_user,
-    P12_SYSTEM, build_p12_user,
-    P13_SYSTEM, build_p13_user,
-    build_p14_prompts, build_p1_judge_user
-)
+from ..api_client import set_debug_mode, is_debug_mode
 
 
 # 叙事风格下拉悬停解释（2026-08-14）：鼠标移到选项上时右侧悬浮显示

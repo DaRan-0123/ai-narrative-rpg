@@ -3,7 +3,6 @@
 游戏运行时开启，实时显示所有API发送和接收的内容
 """
 import queue
-import threading
 import tkinter as tk
 from tkinter import ttk
 import json

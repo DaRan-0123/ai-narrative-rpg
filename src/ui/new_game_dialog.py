@@ -3,7 +3,6 @@
 玩家通过与AI向导多轮对话，逐步完善世界设定
 """
 import tkinter as tk
-from tkinter import messagebox
 import tkinter.font as tkfont
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
