@@ -134,7 +134,7 @@ def load_json(save_path, filename, default=None):
         with open(filepath, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        print(f"读取 {filename} 失败: {e}")
+        print(f"failed to read {filename}: {e}")
         return default if default is not None else {}
 
 

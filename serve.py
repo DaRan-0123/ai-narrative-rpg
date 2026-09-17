@@ -21,14 +21,15 @@ from src.server import serve
 
 def main():
     parser = argparse.ArgumentParser(
-        description="AI 叙事 RPG 服务版（无界面，HTTP 接口）")
+        description="AI Narrative RPG service (headless, HTTP API)")
     parser.add_argument("--host", default="127.0.0.1",
-                        help="监听地址。默认 127.0.0.1（只有本机能连）；"
-                             "要让别的机器连就填 0.0.0.0")
-    parser.add_argument("--port", type=int, default=8765, help="监听端口，默认 8765")
+                        help="Bind address. Defaults to 127.0.0.1 (only this machine can "
+                             "connect); use 0.0.0.0 to let other machines connect")
+    parser.add_argument("--port", type=int, default=8765, help="Port to listen on. Defaults to 8765")
     parser.add_argument("--token", default=os.environ.get("AI_RPG_TOKEN", ""),
-                        help="访问令牌。设了之后所有请求都要带 "
-                             "Authorization: Bearer <token>（也可用环境变量 AI_RPG_TOKEN）")
+                        help="Access token. Once set, every request must carry "
+                             "Authorization: Bearer <token> (can also use the AI_RPG_TOKEN "
+                             "environment variable)")
     args = parser.parse_args()
     serve(host=args.host, port=args.port, token=args.token or None)
 

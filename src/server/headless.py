@@ -155,14 +155,14 @@ class HeadlessEngine(GameEngine):
             self._processing_left = True
             if push_through:
                 self._emit("player", text=user_input, push_through=True)
-                self.append_system("[裁定中：双方分析员调查中...]")
+                self.append_system("[Adjudicating: both analysts are investigating...]")
                 target, args = self._process_risky_input, (user_input,)
             else:
                 # 与界面版 on_left_submit 一致：新提交先清旧快照，
                 # 快照只在真正进入回合（P1 前）时才重新保存——风险打回时无快照可回退
                 self.game.clear_rollback_snapshot()
                 self._emit("player", text=user_input)
-                self.append_system("[正在生成叙事...]")
+                self.append_system("[Generating narrative...]")
                 target, args = self._process_left_input, (user_input,)
 
             thread = threading.Thread(target=target, args=args, daemon=True)
@@ -171,7 +171,7 @@ class HeadlessEngine(GameEngine):
 
             if thread.is_alive():
                 self._processing_left = False
-                return {"status": "error", "error": f"回合超时（{timeout}s），存档已自动保存到超时前状态"}
+                return {"status": "error", "error": f"turn timed out ({timeout}s); the save was auto-saved to its state before the timeout"}
 
             if self._pending_risk:
                 return {
@@ -179,7 +179,7 @@ class HeadlessEngine(GameEngine):
                     "action": self._pending_risk["action"],
                     "reason": self._pending_risk["reason"],
                     "options": ["push_through", "retry"],
-                    "hint": "想继续就再发一次同样的输入并带 push_through=true；想换个做法就直接发新输入。",
+                    "hint": "To continue, send the same input again with push_through=true; to try a different approach, just send new input.",
                 }
             if self._turn_error:
                 return {"status": "error", "error": self._turn_error}
@@ -204,13 +204,13 @@ class HeadlessEngine(GameEngine):
     def run_assistant(self, query, timeout=120):
         """游戏助手查询（世界观/角色/关系），阻塞到出答案"""
         if not self._assistant_lock.acquire(blocking=False):
-            raise TurnBusy(self.save_name + " (助手查询)")
+            raise TurnBusy(self.save_name + " (assistant query)")
         try:
             self._assistant_answer = None
             start = self.current_seq()
             self._processing_right = True
             self.append_system(query, is_player=True)
-            self.append_system("[正在检索...]")
+            self.append_system("[Searching...]")
 
             thread = threading.Thread(target=self._process_right_input,
                                       args=(query,), daemon=True)
@@ -219,7 +219,7 @@ class HeadlessEngine(GameEngine):
 
             if thread.is_alive():
                 self._processing_right = False
-                return {"status": "error", "error": f"查询超时（{timeout}s）"}
+                return {"status": "error", "error": f"query timed out ({timeout}s)"}
 
             return {
                 "status": "ok",
@@ -232,11 +232,11 @@ class HeadlessEngine(GameEngine):
     def rollback(self):
         """撤销上一回合。返回 (ok, error)"""
         if self.is_processing():
-            return False, "当前还有任务在处理中，请等待完成后再回退"
+            return False, "a task is still in progress; wait for it to finish before rolling back"
         if not self.game.has_rollback_snapshot():
-            return False, "没有可回退的上一回合"
+            return False, "there is no previous round to roll back"
         if not self.game.restore_rollback_snapshot():
-            return False, "回退失败：快照不可用"
+            return False, "rollback failed: snapshot unavailable"
         self._emit("rollback", round=self.game.current_round)
         return True, None
 

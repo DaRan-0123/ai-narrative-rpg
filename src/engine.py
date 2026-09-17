@@ -248,7 +248,7 @@ class GameEngine:
         except Exception as e:
             import traceback
             traceback.print_exc()
-            self._safe_after(0, lambda: self._show_error(f"处理出错: {str(e)}"))
+            self._safe_after(0, lambda: self._show_error(f"Something went wrong: {str(e)}"))
 
     def _handle_p1_result(self, result, ok, user_input, narrative_already_shown=False):
         """P1返回后的统一处理（正常链路/裁判链路共用）。
@@ -256,7 +256,7 @@ class GameEngine:
         narrative_already_shown=True：P1流式时叙事已实时显示，_update_after_left 跳过重复 append"""
         try:
             if not ok:
-                self._safe_after(0, lambda: self._show_error(f"叙事生成失败: {result.get('error', '未知错误')}"))
+                self._safe_after(0, lambda: self._show_error(f"Narrative generation failed: {result.get('error', 'unknown error')}"))
                 return
 
             # 验证状态文本完整性（P1可能输出null，统一兜底为空dict）
@@ -459,7 +459,7 @@ class GameEngine:
         except Exception as e:
             import traceback
             traceback.print_exc()
-            err_msg = f"处理出错: {str(e)}"
+            err_msg = f"Something went wrong: {str(e)}"
             self._safe_after(0, lambda: self._show_error(err_msg))
 
     def _stream_p1(self, system, user, temperature=0.7):
@@ -500,7 +500,7 @@ class GameEngine:
         if err:
             return {"error": err}, False
         if not full_text.strip():
-            return {"error": "空响应"}, False
+            return {"error": "empty response"}, False
 
         # 解析完整 JSON（与 call_main_json 相同：markdown 清理 + json.loads，失败重试一次）
         text = full_text.strip()
@@ -514,10 +514,10 @@ class GameEngine:
         try:
             return json.loads(text), True
         except json.JSONDecodeError as e:
-            retry_prompt = f"""请只返回纯JSON，不要包含任何markdown代码块标记（如 ```json）。
-之前的响应解析失败，错误: {e}
+            retry_prompt = f"""Return raw JSON only, with no markdown code fences (such as ```json).
+The previous response failed to parse. Error: {e}
 
-请重新输出以下内容的JSON格式：
+Re-output the following as JSON:
 {text[:1000]}
 """
             return call_main_json(system, retry_prompt, temperature, thinking=False)
@@ -611,7 +611,7 @@ class GameEngine:
         except Exception as e:
             import traceback
             traceback.print_exc()
-            self._safe_after(0, lambda: self._show_error(f"处理出错: {str(e)}"))
+            self._safe_after(0, lambda: self._show_error(f"Something went wrong: {str(e)}"))
 
     def _check_state_fields(self, state):
         """检查状态文本字段是否完整"""
@@ -644,7 +644,7 @@ class GameEngine:
             result, ok = call_lightweight(P3_SYSTEM, p3_user, temperature=0.3)
             if not ok:
                 # 修复：后台任务失败也要让用户可见，不再静默吞掉
-                self._safe_after(0, lambda: self._notify_background_issue("P3事实提取失败"))
+                self._safe_after(0, lambda: self._notify_background_issue("P3 fact extraction failed"))
                 return
             import json
             import re
@@ -685,7 +685,7 @@ class GameEngine:
             # 提示词超长都长一个样，排查时等于没有线索
             print(f"[P3] 事实提取失败: {e!r}")
             # 修复：P3后台失败时提示用户（不中断主流程）
-            self._safe_after(0, lambda: self._notify_background_issue("P3事实提取失败"))
+            self._safe_after(0, lambda: self._notify_background_issue("P3 fact extraction failed"))
 
     def _maybe_run_p5(self, world_event, narrative):
         """P5世界质变判定与世界观改写（后台线程，不阻塞回合收尾）。
@@ -695,7 +695,7 @@ class GameEngine:
             p5_user = build_p5_user(self.game.world_template, narrative)
             raw, ok = call_lightweight(P5_SYSTEM, p5_user, temperature=0.3)
             if not ok:
-                self._safe_after(0, lambda: self._notify_background_issue("世界变化判定失败"))
+                self._safe_after(0, lambda: self._notify_background_issue("world-change check failed"))
                 return
             import json as _json
             import re as _re
@@ -723,7 +723,7 @@ class GameEngine:
                 from .save_manager import save_json
                 save_json(self.game.save_manager.save_path, "world_template.json", self.game.world_template)
             # 3) 系统助手提示玩家
-            self._safe_after(0, lambda d=desc: self.append_system(f"【世界】{d}"))
+            self._safe_after(0, lambda d=desc: self.append_system(f"[World] {d}"))
         except Exception as e:
             # 对玩家静默（不中断游戏），但原因要留在日志里
             print(f"[P5] 世界变化判定失败: {e!r}")
@@ -860,7 +860,7 @@ class GameEngine:
             if not ok:
                 print(f"[记忆] {npc.get('name', npc_id)} 巩固调用失败: {raw}")
                 # 修复：后台巩固失败也提示用户
-                self._safe_after(0, lambda: self._notify_background_issue("记忆巩固失败"))
+                self._safe_after(0, lambda: self._notify_background_issue("memory consolidation failed"))
                 return
 
             # 解析flash返回的概述记忆（兼容markdown代码块）
@@ -890,7 +890,7 @@ class GameEngine:
         except Exception as e:
             print(f"[记忆] 记忆巩固失败({npc_id}): {e}")
             # 修复：异常时提示用户（不中断主流程）
-            self._safe_after(0, lambda: self._notify_background_issue("记忆巩固失败"))
+            self._safe_after(0, lambda: self._notify_background_issue("memory consolidation failed"))
         finally:
             # 复位巩固运行计数（is_processing 据此判断是否处理中）
             n = getattr(self, "_memory_consolidating", 0)
@@ -942,7 +942,7 @@ class GameEngine:
             if not ok or not isinstance(result, dict):
                 print(f"[剧情线] P11调用失败: {result}")
                 # 修复：P11失败提示用户
-                self._safe_after(0, lambda: self._notify_background_issue("剧情回顾失败"))
+                self._safe_after(0, lambda: self._notify_background_issue("story review failed"))
                 return
             new_threads = result.get("threads")
             if not isinstance(new_threads, list):
@@ -959,7 +959,7 @@ class GameEngine:
         except Exception as e:
             print(f"[剧情线] P11回顾失败: {e}")
             # 修复：异常时提示用户
-            self._safe_after(0, lambda: self._notify_background_issue("剧情回顾失败"))
+            self._safe_after(0, lambda: self._notify_background_issue("story review failed"))
         finally:
             self._story_review_running = False
 
@@ -1039,7 +1039,7 @@ class GameEngine:
             raw, ok = call_lightweight(P12_SYSTEM, p12_user, temperature=0.3)
             if not ok:
                 print(f"[地图] P12调用失败: {raw}")
-                self._safe_after(0, lambda: self._notify_background_issue("地图定位失败"))
+                self._safe_after(0, lambda: self._notify_background_issue("map placement failed"))
                 return
             # 解析JSON（兼容markdown代码块）
             import json as _json
@@ -1050,14 +1050,14 @@ class GameEngine:
             try:
                 result = _json.loads(text)
             except Exception as e:
-                self._p12_report_error(f"JSON解析失败: {e}，原文: {text[:100]}")
+                self._p12_report_error(f"JSON parse failed: {e}, raw: {text[:100]}")
                 return
 
             # 校验清单（失败直接报错记录日志，不自动重试——用户定案2）
             try:
                 kind, payload = self._validate_p12_result(result, location_name)
             except ValueError as ve:
-                self._p12_report_error(f"P12校验失败: {ve}")
+                self._p12_report_error(f"P12 validation failed: {ve}")
                 return
 
             if kind == "none":
@@ -1084,7 +1084,7 @@ class GameEngine:
             import traceback
             traceback.print_exc()
             print(f"[地图] P12处理失败: {e}")
-            self._safe_after(0, lambda: self._notify_background_issue("地图定位失败"))
+            self._safe_after(0, lambda: self._notify_background_issue("map placement failed"))
         finally:
             self._p12_running = False
 

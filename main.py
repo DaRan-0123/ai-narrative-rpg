@@ -57,7 +57,7 @@ class Application:
     def __init__(self):
         # 创建主窗口（尺寸由分辨率锁定统一设定，不再自适应）
         self.root = ttk.Window(
-            title="AI 叙事 RPG",
+            title="AI Narrative RPG",
             themename="darkly",
             resizable=(True, True)
         )
@@ -89,10 +89,11 @@ class Application:
         if cfg.get_api_key(provider):
             return  # 本地推理服务的占位符密钥也算已配置
         if not messagebox.askyesno(
-                "需要配置 AI 服务",
-                "还没有配置 AI 服务的 API 密钥，游戏无法生成叙事。\n\n"
-                "现在打开设置去填写吗？\n"
-                "（也可以稍后点主菜单右上角的「设置」）"):
+                "AI Service Setup Required",
+                "No API key for the AI service is configured yet, so the game cannot "
+                "generate narrative.\n\n"
+                "Open settings now to enter one?\n"
+                "(You can also click \"Settings\" in the top-right of the main menu later.)"):
             return
         try:
             self.current_frame.open_settings()
@@ -126,8 +127,8 @@ class Application:
         work = self._get_work_area()
         w, h, x, y = compute_locked_geometry(cfg_w, cfg_h, *work)
         if (w, h) != (cfg_w, cfg_h):
-            print(f"[UI] 分辨率{cfg_w}x{cfg_h}超出工作区，高度适配为{w}x{h}"
-                  f"（工作区{work[2] - work[0]}x{work[3] - work[1]}，预留外框{WINDOW_CHROME_H}px）")
+            print(f"[UI] resolution {cfg_w}x{cfg_h} exceeds the work area; height adjusted to {w}x{h}"
+                  f" (work area {work[2] - work[0]}x{work[3] - work[1]}, reserving {WINDOW_CHROME_H}px for window chrome)")
         self.root.geometry(f"{w}x{h}+{x}+{y}")
         self.root.resizable(False, False)
 
@@ -167,7 +168,7 @@ class Application:
             saves = list_saves()
             empty = [s for s in saves if not s["exists"]]
             if not empty:
-                self._show_error("存档槽位已满（最多10个），请先删除旧存档")
+                self._show_error("All save slots are full (max 10). Delete an old save first.")
                 return
             save_name = empty[0]["name"]
 
@@ -192,18 +193,19 @@ class Application:
 
     def _show_error(self, message):
         from tkinter import messagebox
-        messagebox.showerror("错误", message)
+        messagebox.showerror("Error", message)
 
     def on_root_close(self):
         """主窗口关闭请求：游戏处理中禁止退出，其余情况确认后退出"""
         gw = self.game_window
         try:
             if gw and gw.frame.winfo_exists() and gw.is_processing():
-                messagebox.showinfo("请稍候", "当前回合正在生成中，请等待完成后再退出。")
+                messagebox.showinfo("Please wait", "A turn is currently being generated. "
+                                                   "Wait for it to finish before quitting.")
                 return
         except tk.TclError:
             pass  # 窗口已销毁，直接走正常退出流程
-        if messagebox.askyesno("确认", "确定要退出游戏吗？"):
+        if messagebox.askyesno("Confirm", "Are you sure you want to quit the game?"):
             self.root.destroy()
 
     def _on_tk_callback_error(self, exc, val, tb):
@@ -212,12 +214,12 @@ class Application:
         gw = self.game_window
         try:
             if gw and gw.frame.winfo_exists():
-                gw.notify_callback_error(f"界面回调出错: {val}")
+                gw.notify_callback_error(f"UI callback error: {val}")
                 return
         except tk.TclError:
             pass
         try:
-            messagebox.showerror("错误", f"界面回调出错: {val}")
+            messagebox.showerror("Error", f"UI callback error: {val}")
         except tk.TclError:
             pass  # 主窗口已销毁时无法再弹窗
 
@@ -255,8 +257,9 @@ if __name__ == "__main__":
             pass
         try:
             messagebox.showerror(
-                "启动失败",
-                f"程序启动时出错，详情已写入：\n{log}\n\n请把这个文件发给开发者。")
+                "Startup Failed",
+                "An error occurred while starting the program. Details have been written to:\n"
+                f"{log}\n\nPlease send this file to the developer.")
         except Exception:
             pass
         raise

@@ -30,7 +30,7 @@ class NewGameDialog:
 
     def __init__(self, parent, save_name, on_game_created):
         self.window = ttk.Toplevel(parent)
-        self.window.title("创建新世界 - 与向导对话")
+        self.window.title("Create a New World — Talk to the Wizard")
         self.window.transient(parent)
         self.window.grab_set()
         # 相对父窗口居中，尺寸随屏幕自适应且不越界（小屏幕右侧设定区可滚动）
@@ -64,11 +64,11 @@ class NewGameDialog:
 
         # 开场白
         self._add_assistant_message(
-            "你好，我是你的世界创建向导。让我们一起打造属于你的RPG世界。\n\n"
-            "你可以用任何方式开始——描述一个场景、一个角色、一种氛围，或者回答：\n"
-            "• 你想体验什么样的世界？（魔法？科技？末日？）\n"
-            "• 你的主角是谁？\n"
-            "• 你希望这个世界给你什么感觉？"
+            "Hello! I'm your world-building wizard. Let's create an RPG world together.\n\n"
+            "Start however you like — describe a scene, a character, a mood, or just answer:\n"
+            "• What kind of world do you want? (Magic? Technology? Post-apocalypse?)\n"
+            "• Who is your protagonist?\n"
+            "• How do you want this world to feel?"
         )
 
     def _setup_fonts(self):
@@ -88,7 +88,7 @@ class NewGameDialog:
         self.paned.add(left_frame, weight=3)
 
         # 对话标题
-        ttk.Label(left_frame, text="与世界向导对话", font=self.title_font).pack(anchor=W, pady=(_s(5), _s(5)))
+        ttk.Label(left_frame, text="Talk to the World Wizard", font=self.title_font).pack(anchor=W, pady=(_s(5), _s(5)))
 
         # 对话显示区（配色统一用全局常量，与游戏窗口一致）
         self.chat_text = tk.Text(left_frame, wrap=WORD, state=DISABLED,
@@ -110,25 +110,25 @@ class NewGameDialog:
         self.chat_input.pack(side=LEFT, fill=X, expand=YES, padx=(_s(0), _s(5)))
         self.chat_input.bind("<Return>", lambda e: self.on_chat_submit())
 
-        self.send_btn = ttk.Button(input_frame, text="发送", command=self.on_chat_submit,
+        self.send_btn = ttk.Button(input_frame, text="Send", command=self.on_chat_submit,
                   bootstyle=PRIMARY, width=_s(8))
         self.send_btn.pack(side=LEFT)
 
         # 快捷按钮
         quick_frame = ttk.Frame(left_frame)
         quick_frame.pack(fill=X, padx=_s(5), pady=(_s(0), _s(5)))
-        self.quick_done_btn = ttk.Button(quick_frame, text="就这样吧", command=lambda: self._quick_send("就这样吧，开始游戏"),
+        self.quick_done_btn = ttk.Button(quick_frame, text="That's It", command=lambda: self._quick_send("That's it, let's begin"),
                   bootstyle=INFO, width=_s(10))
         self.quick_done_btn.pack(side=LEFT, padx=_s(2))
-        self.quick_random_btn = ttk.Button(quick_frame, text="随机生成", command=self._random_world,
-                  bootstyle=INFO, width=_s(10))
+        self.quick_random_btn = ttk.Button(quick_frame, text="Random World", command=self._random_world,
+                  bootstyle=INFO, width=_s(13))
         self.quick_random_btn.pack(side=LEFT, padx=_s(2))
 
         # === 右区：世界设定表格（Canvas+滚动条，小屏幕15项标签不溢出）===
         right_frame = ttk.Frame(self.paned)
         self.paned.add(right_frame, weight=2)
 
-        ttk.Label(right_frame, text="当前世界设定", font=self.title_font).pack(anchor=W, pady=(_s(5), _s(5)))
+        ttk.Label(right_frame, text="Current World Settings", font=self.title_font).pack(anchor=W, pady=(_s(5), _s(5)))
 
         right_canvas = tk.Canvas(right_frame, highlightthickness=0, bg=COLOR_BG_PANEL)
         right_scroll = ttk.Scrollbar(right_frame, orient=VERTICAL, command=right_canvas.yview)
@@ -150,24 +150,24 @@ class NewGameDialog:
         right_canvas.pack(side=LEFT, fill=BOTH, expand=YES)
 
         # 表格框架
-        self.draft_frame = ttk.Labelframe(right_inner, text="已确定的内容", bootstyle=INFO)
+        self.draft_frame = ttk.Labelframe(right_inner, text="Settled So Far", bootstyle=INFO)
         self.draft_frame.pack(fill=BOTH, expand=YES, padx=_s(5), pady=_s(5))
 
         self.draft_labels = {}
         draft_items = [
-            ("magic", "魔法体系"), ("tech", "科技水平"), ("society", "社会形态"),
-            ("economy", "经济状况"), ("order", "社会秩序"), ("morality", "道德氛围"),
-            ("starting_area", "初始区域"), ("narrative_style", "叙事风格"),
-            ("assistant_tone", "助手语气"), ("perspective", "视角"),
-            ("difficulty", "难度"), ("player_name", "主角名字"),
-            ("player_appearance", "主角外貌"), ("player_background", "主角背景"),
-            ("world_vibe", "世界氛围")
+            ("magic", "Magic"), ("tech", "Technology"), ("society", "Society"),
+            ("economy", "Economy"), ("order", "Social Order"), ("morality", "Morality"),
+            ("starting_area", "Starting Area"), ("narrative_style", "Narrative Style"),
+            ("assistant_tone", "Assistant Tone"), ("perspective", "Perspective"),
+            ("difficulty", "Difficulty"), ("player_name", "Protagonist Name"),
+            ("player_appearance", "Protagonist Appearance"), ("player_background", "Protagonist Background"),
+            ("world_vibe", "World Vibe")
         ]
         for key, label in draft_items:
             row = ttk.Frame(self.draft_frame)
             row.pack(fill=X, padx=_s(5), pady=_s(2))
-            ttk.Label(row, text=f"{label}:", width=_s(12), font=self.small_font, anchor=E).pack(side=LEFT)
-            lbl = ttk.Label(row, text="未确定", font=self.small_font, foreground="gray")
+            ttk.Label(row, text=f"{label}:", width=_s(23), font=self.small_font, anchor=E).pack(side=LEFT)
+            lbl = ttk.Label(row, text="Not set", font=self.small_font, foreground="gray")
             lbl.pack(side=LEFT, padx=(_s(5), _s(0)))
             self.draft_labels[key] = lbl
 
@@ -175,10 +175,10 @@ class NewGameDialog:
         btn_frame = ttk.Frame(right_inner)
         btn_frame.pack(fill=X, padx=_s(5), pady=(_s(10), _s(5)))
 
-        self.status_label = ttk.Label(btn_frame, text="等待输入...", foreground="gray", font=self.small_font)
+        self.status_label = ttk.Label(btn_frame, text="Waiting for input...", foreground="gray", font=self.small_font)
         self.status_label.pack(side=LEFT)
 
-        self.cancel_btn = ttk.Button(btn_frame, text="取消", command=self.on_close_attempt,
+        self.cancel_btn = ttk.Button(btn_frame, text="Cancel", command=self.on_close_attempt,
                   bootstyle=SECONDARY, width=_s(10))
         self.cancel_btn.pack(side=RIGHT, padx=_s(5))
 
@@ -196,7 +196,7 @@ class NewGameDialog:
     def on_close_attempt(self):
         """取消按钮/关窗统一入口：处理中禁止关闭"""
         if self._busy:
-            self._add_system_message("正在处理中，请稍候……")
+            self._add_system_message("Still processing, please wait…")
             return
         self.window.destroy()
 
@@ -216,14 +216,14 @@ class NewGameDialog:
     def _add_user_message(self, text):
         """添加用户消息到对话区"""
         self.chat_text.config(state=NORMAL)
-        self.chat_text.insert(END, f"\n你: {text}\n\n", "user")
+        self.chat_text.insert(END, f"\nYou: {text}\n\n", "user")
         self.chat_text.see(END)
         self.chat_text.config(state=DISABLED)
 
     def _add_assistant_message(self, text):
         """添加AI消息到对话区"""
         self.chat_text.config(state=NORMAL)
-        self.chat_text.insert(END, f"向导: {text}\n\n", "assistant")
+        self.chat_text.insert(END, f"Wizard: {text}\n\n", "assistant")
         self.chat_text.see(END)
         self.chat_text.config(state=DISABLED)
 
@@ -244,11 +244,11 @@ class NewGameDialog:
         """随机生成世界描述并发送"""
         import random
         vibes = [
-            "我想玩一个高魔蒸汽朋克世界，主角是一个会魔法的机械师",
-            "末日废土，主角是变异人，在废墟里寻找旧时代的科技",
-            "赛博朋克+修真，主角是一个用神经接口修炼的黑客",
-            "中世纪欧洲风格，主角是一个被通缉的骑士",
-            "克苏鲁风格的海边小镇，主角是一个调查员"
+            "A high-magic steampunk world. I play a mechanic who can use magic.",
+            "A post-apocalyptic wasteland. I play a mutant scavenging old-world technology from the ruins.",
+            "Cyberpunk meets cultivation. I play a hacker who cultivates through a neural interface.",
+            "Medieval European setting. I play a knight who is wanted by the law.",
+            "A Lovecraftian seaside town. I play an investigator."
         ]
         self._quick_send(random.choice(vibes))
 
@@ -259,7 +259,7 @@ class NewGameDialog:
             if value:
                 lbl.config(text=value, foreground="white")
             else:
-                lbl.config(text="未确定", foreground="gray")
+                lbl.config(text="Not set", foreground="gray")
 
     def on_chat_submit(self):
         """玩家提交对话"""
@@ -273,7 +273,7 @@ class NewGameDialog:
         self.chat_input.delete(0, END)
         self._add_user_message(user_input)
         self._set_busy(True)
-        self.status_label.config(text="向导思考中...", foreground="blue")
+        self.status_label.config(text="The wizard is thinking...", foreground="blue")
 
         threading.Thread(target=self._process_chat, args=(user_input,), daemon=True).start()
 
@@ -302,7 +302,7 @@ class NewGameDialog:
         except Exception as e:
             import traceback
             traceback.print_exc()
-            err_msg = f"处理出错: {str(e)}"
+            err_msg = f"Something went wrong: {str(e)}"
             self._safe_after(0, lambda: self._show_error(err_msg))
 
     def _update_after_chat(self, reply, is_done):
@@ -311,15 +311,15 @@ class NewGameDialog:
         self._update_draft_display()
 
         if is_done:
-            self.status_label.config(text="世界设定完成！正在生成...", foreground="green")
-            self._add_system_message("正在生成完整世界...")
+            self.status_label.config(text="World settings complete! Generating...", foreground="green")
+            self._add_system_message("Generating the full world...")
             # 生成期间保持busy（输入和按钮继续禁用，防止重复触发/关窗）
             # 后台生成世界
             threading.Thread(target=self._generate_world, daemon=True).start()
         else:
             self._set_busy(False)
             self.chat_input.focus()
-            self.status_label.config(text="继续对话完善世界...", foreground="gray")
+            self.status_label.config(text="Keep chatting to refine the world...", foreground="gray")
 
     def _generate_world(self):
         """对话结束后，生成完整世界并落盘。
@@ -335,19 +335,19 @@ class NewGameDialog:
 
             GameState(self.save_name).init_new(world_data, player_info, settings)
 
-            self._safe_after(0, lambda: self._add_system_message("世界创建完成！"))
+            self._safe_after(0, lambda: self._add_system_message("World created!"))
             self._safe_after(1000, lambda: self._finish())
 
         except Exception as e:
             import traceback
             traceback.print_exc()
-            err_msg = f"生成失败: {str(e)}"
+            err_msg = f"Generation failed: {str(e)}"
             self._safe_after(0, lambda: self._show_error(err_msg))
 
     def _show_error(self, message):
         """显示错误"""
-        self._add_system_message(f"错误: {message}")
-        self.status_label.config(text="出错了，请重试", foreground="red")
+        self._add_system_message(f"Error: {message}")
+        self.status_label.config(text="Something went wrong — please try again", foreground="red")
         # 修复：出错时恢复全部控件（含取消按钮），让用户可以重试或关窗
         self._set_busy(False)
 

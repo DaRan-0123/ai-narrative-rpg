@@ -54,11 +54,11 @@ _BAD_NAME = re.compile(r'[\\/:*?"<>|\x00-\x1f]')
 
 def _check_name(name):
     if not name or not isinstance(name, str):
-        return "存档名不能为空"
+        return "save name must not be empty"
     if _BAD_NAME.search(name) or name in (".", "..") or name.strip() != name:
-        return "存档名含有非法字符（不能有 \\ / : * ? \" < > | 或首尾空格）"
+        return "save name contains invalid characters (cannot contain \\ / : * ? \" < > | or leading/trailing spaces)"
     if len(name) > 40:
-        return "存档名过长（最多 40 字）"
+        return "save name is too long (max 40 characters)"
     return None
 
 
@@ -76,7 +76,7 @@ class Handler(BaseHTTPRequestHandler):
     # ---------- 基础 ----------
 
     def log_message(self, fmt, *args):
-        print(f"[服务] {self.address_string()} {fmt % args}")
+        print(f"[service] {self.address_string()} {fmt % args}")
 
     def _cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -100,9 +100,9 @@ class Handler(BaseHTTPRequestHandler):
         try:
             data = json.loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as e:
-            raise ApiError(400, f"请求体不是合法 JSON: {e}")
+            raise ApiError(400, f"invalid JSON in request body: {e}")
         if not isinstance(data, dict):
-            raise ApiError(400, "请求体必须是 JSON 对象")
+            raise ApiError(400, "request body must be a JSON object")
         return data
 
     def _wants_stream(self, query, body):
@@ -118,7 +118,7 @@ class Handler(BaseHTTPRequestHandler):
         # HTTP 头按 latin-1 解码，非 ASCII 的 token 到这儿已经是乱码，永远比不中。
         # serve() 启动时就会拦住这种 token，这里只做常数时间比较。
         if not hmac.compare_digest(got, f"Bearer {token}"):
-            raise ApiError(401, "缺少或错误的 Authorization: Bearer <token>")
+            raise ApiError(401, "missing or invalid Authorization: Bearer <token>")
 
     # ---------- SSE（HTTP/1.1 分块传输）----------
 
@@ -185,7 +185,7 @@ class Handler(BaseHTTPRequestHandler):
             traceback.print_exc()
             if not self._streaming:
                 try:
-                    self._json({"error": f"服务内部错误: {e}"}, 500)
+                    self._json({"error": f"internal server error: {e}"}, 500)
                 except Exception:
                     pass
 
@@ -217,17 +217,17 @@ class Handler(BaseHTTPRequestHandler):
             if not rest:
                 if method == "GET":
                     if not _save_exists(name):
-                        raise ApiError(404, f"存档不存在: {name}")
+                        raise ApiError(404, f"save not found: {name}")
                     return self._json(get_engine(name).state_snapshot())
                 if method == "DELETE":
                     if not _save_exists(name):
-                        raise ApiError(404, f"存档不存在: {name}")
+                        raise ApiError(404, f"save not found: {name}")
                     drop_engine(name)
                     delete_save(name)
                     return self._json({"deleted": name})
 
             if not _save_exists(name):
-                raise ApiError(404, f"存档不存在: {name}")
+                raise ApiError(404, f"save not found: {name}")
 
             if rest == ["turn"] and method == "POST":
                 return self._turn(name, query)
@@ -245,7 +245,7 @@ class Handler(BaseHTTPRequestHandler):
             if rest == ["events"] and method == "GET":
                 return self._events(name, query)
 
-        raise ApiError(404, f"没有这个端点: {method} {self.path}")
+        raise ApiError(404, f"no such endpoint: {method} {self.path}")
 
     # ---------- 端点实现 ----------
 
@@ -255,7 +255,7 @@ class Handler(BaseHTTPRequestHandler):
         provider = cfg.get("models", "main", "provider", default="deepseek")
         self._json({
             "status": "ok",
-            "service": "AI 叙事 RPG 服务版",
+            "service": "AI Narrative RPG Service",
             "provider": provider,
             "api_key_configured": bool(cfg.get_api_key(provider)),
             "loaded_saves": sorted(_engines.keys()),
@@ -265,7 +265,7 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         user_input = (body.get("input") or "").strip()
         if not user_input:
-            raise ApiError(400, "缺少 input（玩家这一回合要做什么）")
+            raise ApiError(400, "missing input (what the player does this turn)")
         push_through = bool(body.get("push_through", False))
         timeout = int(body.get("timeout") or query.get("timeout", ["300"])[0])
         engine = get_engine(name)
@@ -276,7 +276,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             result = engine.run_turn(user_input, push_through=push_through, timeout=timeout)
         except TurnBusy:
-            raise ApiError(409, "这个存档已有回合在处理中，等它结束再发")
+            raise ApiError(409, "this save already has a turn in progress; wait for it to finish")
         if result["status"] == "ok":
             # 事件流已通过 narrative/events 给出，正文里再带一份完整的省得调用方翻
             result.pop("events", None)
@@ -292,9 +292,9 @@ class Handler(BaseHTTPRequestHandler):
                 holder["result"] = engine.run_turn(user_input, push_through=push_through,
                                                    timeout=timeout)
             except TurnBusy:
-                holder["result"] = {"status": "error", "error": "这个存档已有回合在处理中"}
+                holder["result"] = {"status": "error", "error": "a turn is already in progress for this save"}
             except Exception as e:
-                holder["result"] = {"status": "error", "error": f"回合失败: {e}"}
+                holder["result"] = {"status": "error", "error": f"turn failed: {e}"}
 
         runner = threading.Thread(target=_work, daemon=True)
         runner.start()
@@ -319,7 +319,7 @@ class Handler(BaseHTTPRequestHandler):
             for event in engine.events_since(since):
                 self._sse_send(event)
             self._sse_send({"type": "result", **(holder.get("result")
-                                                 or {"status": "error", "error": "未知错误"})})
+                                                 or {"status": "error", "error": "unknown error"})})
             self._sse_end()
         except (BrokenPipeError, ConnectionResetError):
             pass  # 调用方断开，回合继续在后台跑完并落盘
@@ -328,12 +328,12 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         query = (body.get("query") or "").strip()
         if not query:
-            raise ApiError(400, "缺少 query（要问什么）")
+            raise ApiError(400, "missing query (what to ask)")
         timeout = int(body.get("timeout") or 120)
         try:
             result = get_engine(name).run_assistant(query, timeout=timeout)
         except TurnBusy:
-            raise ApiError(409, "这个存档已有查询在处理中")
+            raise ApiError(409, "a query is already in progress for this save")
         result.pop("events", None)
         return self._json(result)
 
@@ -358,7 +358,7 @@ class Handler(BaseHTTPRequestHandler):
         """P9 世界创建向导一轮。无状态：历史与草稿由调用方持有并传回。"""
         player_input = (body.get("input") or "").strip()
         if not player_input:
-            raise ApiError(400, "缺少 input（玩家对向导说的话）")
+            raise ApiError(400, "missing input (what the player says to the wizard)")
         result = wizard_turn(body.get("history") or [], player_input,
                              body.get("draft") or dict(EMPTY_DRAFT))
         if "error" in result:
@@ -372,12 +372,12 @@ class Handler(BaseHTTPRequestHandler):
         if err:
             raise ApiError(400, err)
         if _save_exists(name):
-            raise ApiError(409, f"存档已存在: {name}（要覆盖请先 DELETE）")
+            raise ApiError(409, f"save already exists: {name} (DELETE it first to overwrite)")
 
         draft = body.get("draft")
         if not isinstance(draft, dict) or not any(draft.values()):
-            raise ApiError(400, "draft（世界设定草稿）为空。先用 POST /v1/worlds/chat "
-                                "跟向导聊出草稿，或直接传一份填好的 draft。")
+            raise ApiError(400, "draft (world draft) is empty. Use POST /v1/worlds/chat "
+                                "to work out a draft with the wizard, or pass a filled-in draft directly.")
 
         progress = []
         save_name, err = create_save(name, draft, on_progress=progress.append)
@@ -402,20 +402,21 @@ def serve(host="127.0.0.1", port=8765, token=None):
             token.encode("ascii")
         except UnicodeEncodeError:
             raise SystemExit(
-                "错误：--token 只能是 ASCII 字符（字母、数字、符号）。\n"
-                "HTTP 请求头按 latin-1 编码，中文 token 传到服务端会变成乱码，"
-                "结果就是永远 401 —— 与其让你对着一个查不出原因的 401 发愁，"
-                "不如现在就说清楚。换一个纯英文数字的字符串吧。")
+                "Error: --token may only contain ASCII characters (letters, digits, symbols).\n"
+                "HTTP request headers are encoded as latin-1, so a non-ASCII token arrives at "
+                "the server as garbled bytes and every request fails with a 401. Rather than "
+                "leave you staring at a 401 with no explanation, we say it up front. Pick a "
+                "plain alphanumeric string instead.")
     httpd = Server((host, port), Handler, api_token=token)
-    print(f"AI 叙事 RPG 服务版已启动：http://{host}:{port}")
-    print(f"  健康检查  GET  http://{host}:{port}/v1/health")
-    print("  接口文档  docs/API.md")
+    print(f"AI Narrative RPG Service started: http://{host}:{port}")
+    print(f"  health check  GET  http://{host}:{port}/v1/health")
+    print("  API documentation  docs/API.md")
     if host not in ("127.0.0.1", "localhost") and not token:
-        print("  ⚠ 正在监听对外地址却没有设置 --token："
-              "任何人都能调用你的 API 密钥产生费用。建议加 --token。")
+        print("  ⚠ Listening on a public address with no --token set: "
+              "anyone can call your API key and rack up charges. Consider adding --token.")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\n已停止。")
+        print("\nStopped.")
     finally:
         httpd.server_close()

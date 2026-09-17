@@ -33,10 +33,10 @@ def _restart_app():
             # main.py 在项目根（src/ui/ 上溯2级 → 根 → main.py）
             script = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "main.py"))
             if not os.path.exists(script):
-                raise FileNotFoundError(f"main.py 不存在: {script}")
+                raise FileNotFoundError(f"main.py not found: {script}")
             subprocess.Popen([sys.executable, script], cwd=os.path.dirname(script))
     except Exception as e:
-        messagebox.showerror("重启失败", f"无法自动重启: {e}")
+        messagebox.showerror("Restart failed", f"Cannot restart automatically: {e}")
         return
     os._exit(0)  # 立即退出当前进程（新进程已启动）
 
@@ -46,7 +46,7 @@ class SettingsDialog:
 
     def __init__(self, parent):
         self.window = ttk.Toplevel(parent)
-        self.window.title("设置")
+        self.window.title("Settings")
         self.window.transient(parent)
         self.window.grab_set()
         # 相对父窗口居中，尺寸随屏幕自适应且不越界
@@ -89,7 +89,7 @@ class SettingsDialog:
         frame = scroll_frame
 
         # ===== API 设置（2026-09-17 多厂商：全部走 OpenAI 兼容协议）=====
-        ttk.Label(frame, text="API 设置").pack(anchor=W, pady=(_s(0), _s(10)))
+        ttk.Label(frame, text="API Settings").pack(anchor=W, pady=(_s(0), _s(10)))
 
         api_frame = ttk.Frame(frame)
         api_frame.pack(fill=X, pady=_s(5))
@@ -99,7 +99,7 @@ class SettingsDialog:
         # 厂商
         row_p = ttk.Frame(api_frame)
         row_p.pack(fill=X, pady=_s(2))
-        ttk.Label(row_p, text="API 厂商:", width=_s(12)).pack(side=LEFT)
+        ttk.Label(row_p, text="API provider:", width=_s(20)).pack(side=LEFT)
         self.provider_box = ttk.Combobox(
             row_p, state="readonly",
             values=[PROVIDER_PRESETS[k]["label"] for k in self._provider_keys])
@@ -110,20 +110,20 @@ class SettingsDialog:
         # API 地址
         row_b = ttk.Frame(api_frame)
         row_b.pack(fill=X, pady=_s(2))
-        ttk.Label(row_b, text="API 地址:", width=_s(12)).pack(side=LEFT)
+        ttk.Label(row_b, text="API base URL:", width=_s(20)).pack(side=LEFT)
         self.api_base_entry = ttk.Entry(row_b)
         self.api_base_entry.pack(side=LEFT, fill=X, expand=YES, padx=(_s(5), _s(0)))
 
         # 密钥（内容随厂商切换，各厂商密钥分别记忆）
         row_k = ttk.Frame(api_frame)
         row_k.pack(fill=X, pady=_s(2))
-        ttk.Label(row_k, text="API 密钥:", width=_s(12)).pack(side=LEFT)
+        ttk.Label(row_k, text="API key:", width=_s(20)).pack(side=LEFT)
         self.api_key_entry = ttk.Entry(row_k, show="*")
         self.api_key_entry.pack(side=LEFT, fill=X, expand=YES, padx=(_s(5), _s(0)))
-        ttk.Button(row_k, text="获取密钥", bootstyle=(INFO, OUTLINE), width=_s(9),
+        ttk.Button(row_k, text="Get an API key", bootstyle=(INFO, OUTLINE), width=_s(15),
                    command=self.on_open_key_url).pack(side=LEFT, padx=(_s(5), _s(0)))
 
-        ttk.Label(api_frame, text="密钥只保存在本机用户目录的 .ai_rpg_config.json，不会上传到任何地方",
+        ttk.Label(api_frame, text="The API key is stored only in .ai_rpg_config.json in your local user folder and is never uploaded anywhere",
                   foreground="gray").pack(anchor=W, pady=(_s(4), _s(0)))
 
         # 初始化厂商/地址/密钥（读当前配置）
@@ -142,52 +142,52 @@ class SettingsDialog:
         self.provider_box.set(PROVIDER_PRESETS[cur]["label"])
 
         # 模型选择（建议列表随厂商变化，可直接手动输入）
-        ttk.Label(frame, text="模型设置").pack(anchor=W, pady=(_s(15), _s(10)))
+        ttk.Label(frame, text="Model Settings").pack(anchor=W, pady=(_s(15), _s(10)))
 
         model_frame = ttk.Frame(frame)
         model_frame.pack(fill=X, pady=_s(5))
 
         row1 = ttk.Frame(model_frame)
         row1.pack(fill=X, pady=_s(2))
-        ttk.Label(row1, text="主力模型:", width=_s(12)).pack(side=LEFT)
+        ttk.Label(row1, text="Main model:", width=_s(20)).pack(side=LEFT)
         self.main_model = ttk.Combobox(row1)
         self.main_model.pack(side=LEFT, fill=X, expand=YES, padx=(_s(5), _s(0)))
         self._bind_wheel(self.main_model)
 
         row2 = ttk.Frame(model_frame)
         row2.pack(fill=X, pady=_s(2))
-        ttk.Label(row2, text="轻量模型:", width=_s(12)).pack(side=LEFT)
+        ttk.Label(row2, text="Lightweight model:", width=_s(20)).pack(side=LEFT)
         self.light_model = ttk.Combobox(row2)
         self.light_model.pack(side=LEFT, fill=X, expand=YES, padx=(_s(5), _s(0)))
         self._bind_wheel(self.light_model)
 
-        ttk.Label(model_frame, text="模型名可直接手动输入；主力模型负责叙事，轻量模型负责判定/摘要等后台任务",
+        ttk.Label(model_frame, text="You can type a model name directly; the main model handles narrative, and the lightweight model handles background tasks such as rulings and summaries",
                   foreground="gray").pack(anchor=W, pady=(_s(4), _s(0)))
 
         self._load_provider_into_form(cur)
 
         # 分辨率选择（游戏窗口进入时按此锁死分辨率；选项常量易扩展，以后加2K只改RESOLUTION_OPTIONS）
-        ttk.Label(frame, text="显示设置").pack(anchor=W, pady=(_s(15), _s(10)))
+        ttk.Label(frame, text="Display Settings").pack(anchor=W, pady=(_s(15), _s(10)))
 
         res_frame = ttk.Frame(frame)
         res_frame.pack(fill=X, pady=_s(5))
         row3 = ttk.Frame(res_frame)
         row3.pack(fill=X, pady=_s(2))
-        ttk.Label(row3, text="游戏分辨率:", width=_s(12)).pack(side=LEFT)
+        ttk.Label(row3, text="Game resolution:", width=_s(20)).pack(side=LEFT)
         self.resolution = ttk.Combobox(row3, values=RESOLUTION_OPTIONS, state="readonly")
         self.resolution.pack(side=LEFT, fill=X, expand=YES, padx=(_s(5), _s(0)))
         self.resolution.set(self.cfg.get("ui", "resolution", default=DEFAULT_RESOLUTION))
         self.resolution.bind("<MouseWheel>", lambda e: self._wheel_scroll(e))
         self.resolution.bind("<Button-4>", lambda e: self._wheel_scroll(e, -1))
         self.resolution.bind("<Button-5>", lambda e: self._wheel_scroll(e, 1))
-        ttk.Label(row3, text="（重启程序后生效）", foreground="gray").pack(side=LEFT, padx=(_s(8), _s(0)))
+        ttk.Label(row3, text="(takes effect after restart)", foreground="gray").pack(side=LEFT, padx=(_s(8), _s(0)))
 
         # 按钮栏（放在frame底部，确保可见）
         btn_frame = ttk.Frame(frame)
         btn_frame.pack(fill=X, pady=(_s(30), _s(0)))
-        ttk.Button(btn_frame, text="测试连接", command=self.on_test_connection, bootstyle=INFO, width=_s(10)).pack(side=LEFT, padx=_s(5))
-        ttk.Button(btn_frame, text="保存设置", command=self.on_save, bootstyle=INFO, width=_s(12)).pack(side=RIGHT, padx=_s(5))
-        ttk.Button(btn_frame, text="取消", command=self.window.destroy, width=_s(8)).pack(side=RIGHT, padx=_s(5))
+        ttk.Button(btn_frame, text="Test connection", command=self.on_test_connection, bootstyle=INFO, width=_s(16)).pack(side=LEFT, padx=_s(5))
+        ttk.Button(btn_frame, text="Save settings", command=self.on_save, bootstyle=INFO, width=_s(14)).pack(side=RIGHT, padx=_s(5))
+        ttk.Button(btn_frame, text="Cancel", command=self.window.destroy, width=_s(8)).pack(side=RIGHT, padx=_s(5))
 
         # 滚轮在任意处滚动内容：递归绑定到内容区所有子控件（Combobox 已有专用绑定，其余用此兜底）
         def _bind_all(w):
@@ -259,7 +259,7 @@ class SettingsDialog:
         """打开当前厂商的密钥申请页"""
         url = PROVIDER_PRESETS[self._cur_provider].get("key_url", "")
         if not url:
-            messagebox.showinfo("获取密钥", "该厂商没有固定的密钥申请页，请查阅其官方文档。", parent=self.window)
+            messagebox.showinfo("Get an API key", "This provider has no fixed API key page. Please refer to its official documentation.", parent=self.window)
             return
         webbrowser.open(url)
 
@@ -299,15 +299,15 @@ class SettingsDialog:
         light_model = cached.get("light", "").strip() or main_model
 
         if not api_base:
-            messagebox.showinfo("无法保存", "请填写 API 地址。", parent=self.window)
+            messagebox.showinfo("Cannot save", "Please enter the API base URL.", parent=self.window)
             return
         if not main_model:
-            messagebox.showinfo("无法保存", "请填写主力模型名。", parent=self.window)
+            messagebox.showinfo("Cannot save", "Please enter the main model name.", parent=self.window)
             return
         if preset.get("needs_key", True) and not api_key:
             if not messagebox.askyesno(
-                    "尚未填写密钥",
-                    f"还没有填写 {preset['label']} 的 API 密钥，保存后游戏无法生成叙事。\n仍要保存吗？",
+                    "No API key entered",
+                    f"You have not entered an API key for {preset['label']}. After saving, the game will not be able to generate narrative.\nSave anyway?",
                     parent=self.window):
                 return
         if not api_key:
@@ -330,7 +330,7 @@ class SettingsDialog:
         self.window.destroy()
         if new_res and new_res != old_res:
             # 分辨率变了 → 自动重启程序生效（2026-08-15）
-            if messagebox.askyesno("重启生效", f"分辨率已改为 {new_res}。\n重启程序后生效，是否立即重启？"):
+            if messagebox.askyesno("Restart required", f"Resolution changed to {new_res}.\nThis takes effect after restarting the program. Restart now?"):
                 _restart_app()
 
     def on_test_connection(self):
@@ -344,26 +344,26 @@ class SettingsDialog:
         model = self._model_cache.get(provider, {}).get("main", "").strip()
 
         if preset.get("needs_key", True) and not api_key:
-            messagebox.showinfo("测试连接", f"请先填写 {preset['label']} 的 API 密钥。", parent=self.window)
+            messagebox.showinfo("Test connection", f"Please enter the API key for {preset['label']} first.", parent=self.window)
             return
         if not api_base:
-            messagebox.showinfo("测试连接", "请先填写 API 地址。", parent=self.window)
+            messagebox.showinfo("Test connection", "Please enter the API base URL first.", parent=self.window)
             return
         if not model:
-            messagebox.showinfo("测试连接", "请先填写主力模型名。", parent=self.window)
+            messagebox.showinfo("Test connection", "Please enter the main model name first.", parent=self.window)
             return
 
         self.window.config(cursor="watch")
         self.window.update_idletasks()
         try:
             with self._temp_api_config(provider, model, api_base, api_key or LOCAL_PLACEHOLDER_KEY):
-                content, ok = call_main("请回复'连接正常'四个字。", "测试连接", temperature=0.1)
+                content, ok = call_main("Please reply with exactly the words 'connection OK'.", "Test connection", temperature=0.1)
             if ok:
-                messagebox.showinfo("测试连接", f"连接成功！响应：{content[:60]}", parent=self.window)
+                messagebox.showinfo("Test connection", f"Connection successful! Response: {content[:60]}", parent=self.window)
             else:
-                messagebox.showerror("测试连接", f"连接失败：{content[:200]}", parent=self.window)
+                messagebox.showerror("Test connection", f"Connection failed: {content[:200]}", parent=self.window)
         except Exception as e:
-            messagebox.showerror("测试连接", f"连接出错：{e}", parent=self.window)
+            messagebox.showerror("Test connection", f"Connection error: {e}", parent=self.window)
         finally:
             self.window.config(cursor="")
 
@@ -393,7 +393,7 @@ class MainMenu:
         self.frame.bind("<Configure>", self._fit_inner)
 
         # 设置按钮放右上角（不再挤底部按钮栏，2026-08-14 用户要求）
-        self.settings_btn = ttk.Button(self.frame, text="设置", command=self.open_settings,
+        self.settings_btn = ttk.Button(self.frame, text="Settings", command=self.open_settings,
                                        bootstyle=SECONDARY, width=_s(8))
         self.settings_btn.place(relx=1.0, x=-8, rely=0.0, y=8, anchor="ne")
 
@@ -408,11 +408,11 @@ class MainMenu:
 
     def build_ui(self):
         # 标题
-        title = ttk.Label(self.inner, text="AI 叙事 RPG", font=(FONT_FAMILY, font_size(20), "bold"))
+        title = ttk.Label(self.inner, text="AI Narrative RPG", font=(FONT_FAMILY, font_size(20), "bold"))
         title.pack(pady=(_s(20), _s(30)))
 
         # 存档列表
-        ttk.Label(self.inner, text="存档（点击存档行的【继续】即可读取）").pack(anchor=W, pady=(_s(0), _s(10)))
+        ttk.Label(self.inner, text="Saves (click Continue on a save row to load it)").pack(anchor=W, pady=(_s(0), _s(10)))
 
         # 按钮栏（P2：去掉部分Windows字体下显示为方框的emoji，统一纯文字按钮）
         # 先于存档列表 pack 且钉底：空间不足时优先保证「新游戏」「退出」可见
@@ -424,8 +424,8 @@ class MainMenu:
 
         self.refresh_save_list()
 
-        ttk.Button(btn_frame, text="新游戏", command=self.on_new_game, bootstyle=PRIMARY, width=_s(12)).pack(side=LEFT, padx=_s(5))
-        ttk.Button(btn_frame, text="退出", command=self.root.quit, bootstyle=DANGER, width=_s(12)).pack(side=RIGHT, padx=_s(5))
+        ttk.Button(btn_frame, text="New Game", command=self.on_new_game, bootstyle=PRIMARY, width=_s(12)).pack(side=LEFT, padx=_s(5))
+        ttk.Button(btn_frame, text="Exit", command=self.root.quit, bootstyle=DANGER, width=_s(12)).pack(side=RIGHT, padx=_s(5))
 
     def refresh_save_list(self):
         """刷新存档列表"""
@@ -442,25 +442,25 @@ class MainMenu:
             name_label.pack(side=LEFT)
 
             if save["exists"]:
-                info_text = f"轮次: {save['rounds']} | 最后游玩: {save['last_played']}"
+                info_text = f"Round: {save['rounds']} | Last played: {save['last_played']}"
                 ttk.Label(row, text=info_text, foreground="gray").pack(side=LEFT, padx=(_s(10), _s(0)))
 
-                ttk.Button(row, text="继续", command=lambda s=save: self.on_continue_game(s["name"]),
-                          bootstyle=INFO, width=_s(6)).pack(side=RIGHT, padx=_s(2))
-                ttk.Button(row, text="删除", command=lambda s=save: self.on_delete_save(s["name"]),
-                          bootstyle=DANGER, width=_s(6)).pack(side=RIGHT, padx=_s(2))
+                ttk.Button(row, text="Continue", command=lambda s=save: self.on_continue_game(s["name"]),
+                          bootstyle=INFO, width=_s(9)).pack(side=RIGHT, padx=_s(2))
+                ttk.Button(row, text="Delete", command=lambda s=save: self.on_delete_save(s["name"]),
+                          bootstyle=DANGER, width=_s(8)).pack(side=RIGHT, padx=_s(2))
             else:
-                ttk.Label(row, text="（空）", foreground="gray").pack(side=LEFT, padx=(_s(10), _s(0)))
-                ttk.Button(row, text="新建", command=lambda s=save: self.on_new_game(s["name"]),
+                ttk.Label(row, text="(Empty)", foreground="gray").pack(side=LEFT, padx=(_s(10), _s(0)))
+                ttk.Button(row, text="New", command=lambda s=save: self.on_new_game(s["name"]),
                           bootstyle=PRIMARY, width=_s(6)).pack(side=RIGHT, padx=_s(2))
 
     def open_settings(self):
         SettingsDialog(self.root)
 
     def on_delete_save(self, save_name):
-        if messagebox.askyesno("确认删除", f"确定要删除存档 '{save_name}' 吗？"):
+        if messagebox.askyesno("Confirm deletion", f"Delete save '{save_name}'?"):
             if delete_save(save_name):
-                messagebox.showinfo("删除成功", f"存档 '{save_name}' 已删除")
+                messagebox.showinfo("Deleted", f"Save '{save_name}' has been deleted")
                 self.refresh_save_list()
             else:
-                messagebox.showerror("删除失败", "存档不存在")
+                messagebox.showerror("Delete failed", "Save does not exist")

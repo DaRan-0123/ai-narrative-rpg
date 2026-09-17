@@ -668,7 +668,7 @@ class GameState:
             target.save_meta(meta)
             return True
         except Exception as e:
-            print(f"[手动保存] 保存到 {target_name} 失败: {e}")
+            print(f"[manual save] failed to save to {target_name}: {e}")
             return False
 
     def save_all(self):
@@ -703,7 +703,7 @@ class GameState:
             if archived:
                 self.action_history = remaining
                 self.save_manager.save_action_history(self.action_history)
-                print(f"[系统] 已归档旧记录到 {archived}")
+                print(f"[system] archived old records to {archived}")
 
         # 清空待处理
         self.pending_facts.clear()

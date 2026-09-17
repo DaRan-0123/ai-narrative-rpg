@@ -45,11 +45,11 @@ from ..prompts import (
 
 # 叙事风格下拉悬停解释（2026-08-14）：鼠标移到选项上时右侧悬浮显示
 STYLE_DESCRIPTIONS = {
-    "Grim Realism": "冷硬写实，聚焦泥泞、尘土与真实代价；客观陈述所见，不带抒情",
-    "Poetic": "文笔细腻，多用意象与留白，字里行间有诗意的余味",
-    "Plain": "白描为主，三言两语交代事实，信息密度高、节奏快",
-    "Ornate": "辞藻铺陈、句式讲究，讲究氛围与画面感的浓墨重彩",
-    "Stream of Consciousness": "贴近角色的感官与思绪流转，跳跃联想，主观色彩浓",
+    "Grim Realism": "Gritty and grounded: mud, dust, and real costs. States what is seen, without lyricism.",
+    "Poetic": "Delicate prose, heavy on imagery and implication; a poetic aftertaste between the lines.",
+    "Plain": "Plain description: facts in a few words, dense information, brisk pace.",
+    "Ornate": "Elaborate diction and crafted sentences; heavy on atmosphere and visual richness.",
+    "Stream of Consciousness": "Close to the character's senses and drifting thoughts; associative leaps, strongly subjective.",
 }
 
 
@@ -305,40 +305,40 @@ class GameWindow(GameEngine):
         # pack空间分配是"先pack先得"：右侧按钮先pack(side=RIGHT)钉住位置，
         # 左侧信息文本后pack，空间不足时被压缩/截断的是文字，按钮永远不消失
         # 回退按钮放最外沿（最右），其次返回主菜单（2026-08-14 回退功能）
-        self.rollback_btn = ttk.Button(self.info_bar, text="回退", command=self.on_rollback,
-                                       bootstyle="danger-outline", width=_s(6))
+        self.rollback_btn = ttk.Button(self.info_bar, text="Roll Back", command=self.on_rollback,
+                                       bootstyle="danger-outline", width=_s(11))
         self.rollback_btn.pack(side=RIGHT, padx=_s(5))
 
-        self.return_menu_btn = ttk.Button(self.info_bar, text="返回主菜单", command=self.on_return_menu_click,
+        self.return_menu_btn = ttk.Button(self.info_bar, text="Main Menu", command=self.on_return_menu_click,
                                           bootstyle=SECONDARY, width=_s(12))
         self.return_menu_btn.pack(side=RIGHT, padx=_s(5))
 
         # 手动保存（2026-08-14：选择存档位覆盖保存；位于调试模式与返回主菜单之间）
-        self.save_btn = ttk.Button(self.info_bar, text="手动保存", command=self.on_manual_save,
+        self.save_btn = ttk.Button(self.info_bar, text="Save", command=self.on_manual_save,
                                    bootstyle=INFO, width=_s(8))
         self.save_btn.pack(side=RIGHT, padx=_s(5))
 
         # 世界档案（2026-08-15：世界观/剧情线/NPC关系/世界大事记只读展示）
-        self.world_btn = ttk.Button(self.info_bar, text="世界", command=self.on_open_world_doc,
+        self.world_btn = ttk.Button(self.info_bar, text="World", command=self.on_open_world_doc,
                                     bootstyle=INFO, width=_s(5))
         self.world_btn.pack(side=RIGHT, padx=_s(5))
 
         # 叙事日志（2026-08-15：历史轮次只读回看）
-        self.history_btn = ttk.Button(self.info_bar, text="日志", command=self.on_open_history,
+        self.history_btn = ttk.Button(self.info_bar, text="Log", command=self.on_open_history,
                                       bootstyle=INFO, width=_s(5))
         self.history_btn.pack(side=RIGHT, padx=_s(5))
 
         # 调试模式开关
         self.debug_var = tk.BooleanVar(value=is_debug_mode())
         self.debug_btn = ttk.Checkbutton(
-            self.info_bar, text="调试模式",
+            self.info_bar, text="Debug Mode",
             variable=self.debug_var,
             command=self.on_debug_toggle,
             bootstyle=("info", "toolbutton")
         )
         self.debug_btn.pack(side=RIGHT, padx=_s(5))
 
-        self.round_label = ttk.Label(self.info_bar, text=f"轮次: {self.game.current_round}",
+        self.round_label = ttk.Label(self.info_bar, text=f"Round: {self.game.current_round}",
                                      font=FONT_TOP)
         self.round_label.pack(side=LEFT, padx=_s(5))
 
@@ -349,7 +349,7 @@ class GameWindow(GameEngine):
         # 叙事风格实时切换
         style_frame = ttk.Frame(self.info_bar)
         style_frame.pack(side=LEFT, padx=_s(20))
-        ttk.Label(style_frame, text="叙事风格:", font=FONT_TOP).pack(side=LEFT)
+        ttk.Label(style_frame, text="Style:", font=FONT_TOP).pack(side=LEFT)
         self.style_var = tk.StringVar(value=self.game.settings.get("narrative_style", NARRATIVE_STYLES[0]))
         self.style_combo = ttk.Combobox(style_frame, textvariable=self.style_var,
                                          values=list(NARRATIVE_STYLES),
@@ -384,19 +384,19 @@ class GameWindow(GameEngine):
         status_area = ttk.Frame(bottom_band)
         status_area.place(relx=0, rely=0, relwidth=1.0, relheight=1.0)
 
-        self.status_frame = ttk.Labelframe(status_area, text="状态", bootstyle=INFO)
+        self.status_frame = ttk.Labelframe(status_area, text="Status", bootstyle=INFO)
         self.status_frame.pack(fill=BOTH, expand=YES, padx=_s(6), pady=(_s(5), _s(0)))
 
         self.status_labels = {}
         status_items = [
-            ("season", "季节"),
-            ("time", "时间"),
-            ("weather", "天气"),
-            ("location", "位置"),
-            ("health", "健康"),
-            ("items", "物品"),
-            ("appearance", "外貌"),
-            ("people", "附近NPC"),
+            ("season", "Season"),
+            ("time", "Time"),
+            ("weather", "Weather"),
+            ("location", "Location"),
+            ("health", "Health"),
+            ("items", "Items"),
+            ("appearance", "Appearance"),
+            ("people", "Nearby NPCs"),
         ]
         for idx, (key, label) in enumerate(status_items):
             r, c = divmod(idx, 4)
@@ -448,7 +448,7 @@ class GameWindow(GameEngine):
         self.left_input.pack(side=LEFT, fill=X, expand=YES, padx=(_s(0), _s(5)))
         self.left_input.bind("<Return>", lambda e: self.on_left_submit())
 
-        self.left_send_btn = ttk.Button(left_input_frame, text="发送", command=self.on_left_submit,
+        self.left_send_btn = ttk.Button(left_input_frame, text="Send", command=self.on_left_submit,
                                         bootstyle=PRIMARY, width=_s(8))
         self.left_send_btn.pack(side=LEFT)
 
@@ -457,20 +457,20 @@ class GameWindow(GameEngine):
         self.risk_label = ttk.Label(self.risk_frame, text="", bootstyle="danger",
                                     font=FONT_BODY)
         self.risk_label.pack(side=LEFT, padx=_s(5), fill=X, expand=YES)
-        self.risk_cancel_btn = ttk.Button(self.risk_frame, text="换个做法",
+        self.risk_cancel_btn = ttk.Button(self.risk_frame, text="Try Something Else",
                                           command=self.on_risk_cancel,
-                                          bootstyle=SECONDARY, width=_s(10))
+                                          bootstyle=SECONDARY, width=_s(19))
         self.risk_cancel_btn.pack(side=RIGHT, padx=_s(2))
-        self.risk_go_btn = ttk.Button(self.risk_frame, text="放手一搏",
+        self.risk_go_btn = ttk.Button(self.risk_frame, text="Take the Risk",
                                       command=self.on_risk_go,
-                                      bootstyle=DANGER, width=_s(10))
+                                      bootstyle=DANGER, width=_s(14))
         self.risk_go_btn.pack(side=RIGHT, padx=_s(2))
 
         # --- 游戏助手（右，30%，2026-08-14 从底部带迁入）：标题+对话区+查询输入 ---
         assistant_col = ttk.Frame(middle_band)
         assistant_col.place(relx=0.70, rely=0, relwidth=0.30, relheight=1.0)
 
-        ttk.Label(assistant_col, text="游戏助手", font=FONT_PANEL_TITLE).pack(anchor=W, padx=(_s(8), _s(5)), pady=(_s(5), _s(0)))
+        ttk.Label(assistant_col, text="Game Assistant", font=FONT_PANEL_TITLE).pack(anchor=W, padx=(_s(8), _s(5)), pady=(_s(5), _s(0)))
 
         # 系统对话区（带滚动条；height=9初始请求高，中间带高度下由expand撑满整列）
         sys_wrap = ttk.Frame(assistant_col)
@@ -499,7 +499,7 @@ class GameWindow(GameEngine):
         self.right_input.pack(side=LEFT, fill=X, expand=YES, padx=(_s(0), _s(5)))
         self.right_input.bind("<Return>", lambda e: self.on_right_submit())
 
-        self.right_query_btn = ttk.Button(right_input_frame, text="查询", command=self.on_right_submit,
+        self.right_query_btn = ttk.Button(right_input_frame, text="Ask", command=self.on_right_submit,
                                           bootstyle=INFO, width=_s(8))
         self.right_query_btn.pack(side=LEFT)
 
@@ -551,7 +551,7 @@ class GameWindow(GameEngine):
     def notify_callback_error(self, message):
         """供全局Tk异常钩子调用：在叙事区显示一行错误"""
         try:
-            self.append_narrative(f"【错误】{message}", tag="error")
+            self.append_narrative(f"[Error] {message}", tag="error")
         except tk.TclError:
             pass
 
@@ -563,10 +563,10 @@ class GameWindow(GameEngine):
         self.narrative_text.config(state=DISABLED)
 
     def _remove_generating_placeholder(self):
-        """删除叙事区残留的"[正在生成叙事...]"占位行（search 可靠定位，不依赖行号猜测）。
+        """删除叙事区残留的"[Generating narrative...]"占位行（search 可靠定位，不依赖行号猜测）。
         调用方须已置 narrative_text 为 NORMAL"""
         try:
-            idx = self.narrative_text.search("[正在生成叙事...]", "1.0", stopindex=END)
+            idx = self.narrative_text.search("[Generating narrative...]", "1.0", stopindex=END)
             if idx:
                 lineno = int(idx.split(".")[0])
                 self.narrative_text.delete(f"{lineno}.0", f"{lineno + 1}.0")
@@ -575,7 +575,7 @@ class GameWindow(GameEngine):
 
     def _append_streamed_narrative(self, text):
         """P1流式叙事增量实时追加（UI线程，2026-08-14）。
-        首块到达时先删除"[正在生成叙事...]"占位行，再逐字插入"""
+        首块到达时先删除"[Generating narrative...]"占位行，再逐字插入"""
         try:
             self.narrative_text.config(state=NORMAL)
             if not self._stream_first_shown:
@@ -591,11 +591,11 @@ class GameWindow(GameEngine):
         """追加文本到系统助手栏（tag区分玩家提问/助手回复/系统通知）"""
         self.system_text.config(state=NORMAL)
         if is_player:
-            prefix, tag = "你: ", "user"
+            prefix, tag = "You: ", "user"
         elif text.startswith("[") and text.endswith("]"):
             prefix, tag = "", "system"
         else:
-            prefix, tag = "助手: ", "assistant"
+            prefix, tag = "Assistant: ", "assistant"
         self.system_text.insert(END, prefix + text + "\n\n", tag)
         self.system_text.see(END)
         self.system_text.config(state=DISABLED)
@@ -604,17 +604,17 @@ class GameWindow(GameEngine):
         """显示开局简介：主角+世界观+位置+叙事"""
         # === 主角简介 ===
         profile = self.game.player_profile
-        name = profile.get("name", "无名者")
+        name = profile.get("name", "Unnamed")
         appearance = profile.get("appearance", "")
         background = profile.get("background", "")
         
         self.append_narrative("═" * 40)
-        self.append_narrative("【你是谁】")
-        self.append_narrative(f"名字：{name}")
+        self.append_narrative("[Who You Are]")
+        self.append_narrative(f"Name: {name}")
         if appearance:
-            self.append_narrative(f"外貌：{appearance}")
+            self.append_narrative(f"Appearance: {appearance}")
         if background:
-            self.append_narrative(f"背景：{background}")
+            self.append_narrative(f"Background: {background}")
         self.append_narrative("═" * 40)
         
         # === 世界观简介 ===
@@ -623,31 +623,31 @@ class GameWindow(GameEngine):
         social_fw = world.get("social_framework", "")
         area_desc = world.get("starting_area_description", "")
         
-        self.append_narrative("【世界概况】")
+        self.append_narrative("[The World]")
         if world_desc:
             self.append_narrative(world_desc[:900])
         if social_fw:
-            self.append_narrative(f"社会形态：{social_fw[:700]}")
+            self.append_narrative(f"Social structure: {social_fw[:700]}")
         self.append_narrative("═" * 40)
         
         # === 当前位置 ===
-        loc = self.game.player_state.get("current_location", "未知")
+        loc = self.game.player_state.get("current_location", "Unknown")
 
-        self.append_narrative("【你在哪】")
+        self.append_narrative("[Where You Are]")
         if area_desc:
             self.append_narrative(area_desc[:900])
-        self.append_narrative(f"当前位置：{loc}")
+        self.append_narrative(f"Current location: {loc}")
         
         # 在场NPC
         scene_people = self.game.player_state.get("current_scene_people", "")
         if not is_alone(scene_people):
-            self.append_narrative(f"在场人物：{scene_people}")
+            self.append_narrative(f"Present: {scene_people}")
         self.append_narrative("═" * 40)
         
         # === 初始叙事 ===
         init_narrative = world.get("initial_situation", "")
         if init_narrative:
-            self.append_narrative("【故事开始】")
+            self.append_narrative("[The Story Begins]")
             self.append_narrative(init_narrative)
             self.append_narrative("═" * 40)
         
@@ -661,12 +661,12 @@ class GameWindow(GameEngine):
         last_n = history[-n:] if len(history) >= n else history
         if not last_n:
             return
-        self.append_narrative("【接上次的冒险】")
+        self.append_narrative("[Continuing the Adventure]")
         for entry in last_n:
             r = entry.get("round", "?")
             inp = entry.get("input", "")
             narr = entry.get("narrative", "")
-            self.append_narrative(f"\n--- 第{r}轮 ---", tag="system")
+            self.append_narrative(f"\n--- Round {r} ---", tag="system")
             self.append_narrative(f"> {inp}", tag="input")
             if narr:
                 self.append_narrative(narr)
@@ -709,7 +709,7 @@ class GameWindow(GameEngine):
         self.append_narrative(f"> {user_input}", tag="input")
 
         self._set_left_busy(True)
-        self.append_narrative("[正在生成叙事...]", tag="system")
+        self.append_narrative("[Generating narrative...]", tag="system")
 
         threading.Thread(target=self._process_left_input, args=(user_input,), daemon=True).start()
 
@@ -724,16 +724,16 @@ class GameWindow(GameEngine):
         # 清掉"正在生成叙事..."占位（本线程不会走完正常链路，无人替它清）
         self.narrative_text.config(state=NORMAL)
         lines = self.narrative_text.get("1.0", END).split("\n")
-        if lines and "[正在生成叙事...]" in lines[-2]:
+        if lines and "[Generating narrative...]" in lines[-2]:
             self.narrative_text.delete("end-2l", END)
         self.narrative_text.config(state=DISABLED)
 
         self.append_narrative(
-            f"⚠ 你正在进行一个有风险的尝试" + (f"（{reason}）" if reason else ""),
+            f"⚠ This is a risky attempt" + (f"（{reason}）" if reason else ""),
             tag="error")
         # 确认条：动作摘要（截断防爆版）+ 两个抉择按钮
         action_brief = user_input if len(user_input) <= 60 else user_input[:60] + "…"
-        self.risk_label.config(text=f"「{action_brief}」要冒险试试吗？")
+        self.risk_label.config(text=f"Try \"{action_brief}\" anyway?")
         self._risk_action = user_input
         if not self.risk_frame.winfo_ismapped():
             self.risk_frame.pack(fill=X, padx=_s(5), pady=(_s(0), _s(5)),
@@ -761,7 +761,7 @@ class GameWindow(GameEngine):
         if not action:
             return
         self._hide_risk_confirm()
-        self.append_narrative("[裁定中：双方分析员调查中...]", tag="system")
+        self.append_narrative("[Adjudicating: both analysts are investigating...]", tag="system")
         self._set_left_busy(True)  # 重新busy，裁定期间禁止重复提交
         threading.Thread(target=self._process_risky_input, args=(action,),
                          daemon=True).start()
@@ -809,7 +809,7 @@ class GameWindow(GameEngine):
         if not skip_narrative:
             self.append_narrative(narrative)
 
-        self.round_label.config(text=f"轮次: {self.game.current_round}")
+        self.round_label.config(text=f"Round: {self.game.current_round}")
 
         # 更新状态栏（位置/天气在状态栏卡片展示）
         self._update_status_bar()
@@ -823,7 +823,7 @@ class GameWindow(GameEngine):
         self._remove_generating_placeholder()
         self.narrative_text.config(state=DISABLED)
 
-        self.append_narrative(f"【错误】{message}", tag="error")
+        self.append_narrative(f"[Error] {message}", tag="error")
         self._set_left_busy(False)
 
     def on_right_submit(self):
@@ -837,7 +837,7 @@ class GameWindow(GameEngine):
 
         self.right_input.delete(0, END)
         self.append_system(query, is_player=True)
-        self.append_system("[正在检索...]")
+        self.append_system("[Searching...]")
         self._set_right_busy(True)
 
         threading.Thread(target=self._process_right_input, args=(query,), daemon=True).start()
@@ -847,7 +847,7 @@ class GameWindow(GameEngine):
         new_style = self.style_var.get()
         self.game.settings["narrative_style"] = new_style
         self.game.save_manager.save_settings(self.game.settings)
-        self.append_system(f"叙事风格已切换为：{new_style}")
+        self.append_system(f"Narrative style changed to: {new_style}")
 
     # ===== 叙事风格下拉悬停解释（2026-08-14）：选项上悬浮显示描述 =====
 
@@ -957,7 +957,7 @@ class GameWindow(GameEngine):
         """游戏助手处理完成后的UI更新（占位用 search 可靠定位，不再猜行号）"""
         self.system_text.config(state=NORMAL)
         try:
-            idx = self.system_text.search("[正在检索...]", "1.0", stopindex=END)
+            idx = self.system_text.search("[Searching...]", "1.0", stopindex=END)
             if idx:
                 lineno = int(idx.split(".")[0])
                 self.system_text.delete(f"{lineno}.0", f"{lineno + 1}.0")
@@ -976,29 +976,29 @@ class GameWindow(GameEngine):
         if enabled:
             from .debug_window import toggle_debug
             toggle_debug(self.root)
-            self.append_system("调试模式已开启 — API调用将实时显示在调试窗口中")
+            self.append_system("Debug mode on — API calls will be shown live in the debug window")
         else:
             from .debug_window import get_debug_window
             dw = get_debug_window()
             if dw:
                 dw.hide()
-            self.append_system("调试模式已关闭")
+            self.append_system("Debug mode off")
 
     def on_manual_save(self):
         """手动保存（2026-08-14）：选择存档位保存当前进度；选已有存档位则确认覆盖。
         卡片式槽位选择：Canvas 圆角卡片（复用状态卡片圆角画法），点击选中高亮"""
         if self.is_processing():
-            messagebox.showinfo("请稍候", "当前回合还在处理中，请等待完成后再保存。")
+            messagebox.showinfo("Please Wait", "A turn is still being processed. Please wait for it to finish before saving.")
             return
         from ..save_manager import list_saves
         saves = list_saves()
         dlg = tk.Toplevel(self.root)
-        dlg.title("手动保存")
+        dlg.title("Manual Save")
         dlg.transient(self.root)
         dlg.grab_set()
         from . import place_window
         place_window(dlg, _s(620), _s(580), min_w=_s(520), min_h=_s(480), parent=self.root)
-        ttk.Label(dlg, text="选择保存到哪个存档位：", font=FONT_BODY).pack(anchor=W, padx=_s(16), pady=(_s(14), _s(8)))
+        ttk.Label(dlg, text="Choose a save slot:", font=FONT_BODY).pack(anchor=W, padx=_s(16), pady=(_s(14), _s(8)))
 
         # 卡片列表区（Canvas 画圆角卡片，点击选中）
         cards_frame = tk.Frame(dlg, bg=COLOR_BG_PANEL)
@@ -1079,10 +1079,10 @@ class GameWindow(GameEngine):
             # 名称 + 信息
             if s["exists"]:
                 title = f"{s['name']}"
-                info = f"{s['rounds']}轮 · 最后游玩 {s['last_played']}"
+                info = f"Round {s['rounds']} · Last played {s['last_played']}"
             else:
-                title = f"{s['name']}（空槽位）"
-                info = "当前无存档，可直接保存"
+                title = f"{s['name']} (empty)"
+                info = "No save here yet — you can save directly"
             card.create_text(12, 16, anchor="w", text=title, fill=COLOR_FG_MAIN,
                              font=FONT_PANEL_TITLE)
             card.create_text(12, 42, anchor="w", text=info, fill=CARD_TITLE_FG,
@@ -1098,35 +1098,35 @@ class GameWindow(GameEngine):
         def _do_save():
             idx = selected["index"]
             if idx is None:
-                messagebox.showinfo("手动保存", "请先选择一个存档位。", parent=dlg)
+                messagebox.showinfo("Manual Save", "Select a save slot first.", parent=dlg)
                 return
             target = saves[idx]["name"]
             if saves[idx]["exists"]:
                 if not messagebox.askyesno(
-                        "确认覆盖",
-                        f"存档位「{target}」已有存档（{saves[idx]['rounds']}轮）。\n"
-                        "确定要覆盖原有存档吗？",
+                        "Confirm Overwrite",
+                        f"Save slot \"{target}\" already has a save (Round {saves[idx]['rounds']}).\n"
+                        "Overwrite it?",
                         parent=dlg):
                     return
             dlg.destroy()
             ok = self.game.save_to_slot(target)
             if ok:
-                self.append_system(f"[已手动保存到 {target}]")
+                self.append_system(f"[Saved to {target}]")
             else:
-                messagebox.showerror("手动保存", f"保存到 {target} 失败", parent=self.root)
+                messagebox.showerror("Manual Save", f"Failed to save to {target}", parent=self.root)
 
-        ttk.Button(btn_row, text="保存到选中槽位", command=_do_save,
-                   bootstyle=INFO, width=_s(18)).pack(side=LEFT, padx=(0, _s(8)))
-        ttk.Button(btn_row, text="取消", command=dlg.destroy, width=_s(10)).pack(side=LEFT)
+        ttk.Button(btn_row, text="Save to Selected Slot", command=_do_save,
+                   bootstyle=INFO, width=_s(22)).pack(side=LEFT, padx=(0, _s(8)))
+        ttk.Button(btn_row, text="Cancel", command=dlg.destroy, width=_s(10)).pack(side=LEFT)
 
     def on_open_history(self):
         """叙事日志（2026-08-15）：只读窗口按轮次回看全部历史"""
         dlg = tk.Toplevel(self.root)
-        dlg.title("叙事日志")
+        dlg.title("Narrative Log")
         dlg.transient(self.root)
         from . import place_window
         place_window(dlg, _s(760), _s(720), min_w=_s(520), min_h=_s(400), parent=self.root)
-        ttk.Label(dlg, text="冒险历史记录", font=FONT_PANEL_TITLE).pack(anchor=W, padx=_s(12), pady=(_s(10), _s(6)))
+        ttk.Label(dlg, text="Adventure History", font=FONT_PANEL_TITLE).pack(anchor=W, padx=_s(12), pady=(_s(10), _s(6)))
         wrap = ttk.Frame(dlg)
         wrap.pack(fill=BOTH, expand=YES, padx=_s(10), pady=_s(8))
         text = tk.Text(wrap, wrap=WORD, state=DISABLED, font=FONT_BODY,
@@ -1139,16 +1139,16 @@ class GameWindow(GameEngine):
         text.tag_config("input", foreground=COLOR_TAG_INPUT)
         text.config(state=NORMAL)
         for e in self.game.action_history:
-            text.insert(END, f"\n──────── 第{e.get('round','?')}轮 ────────\n", "head")
+            text.insert(END, f"\n──────── Round {e.get('round','?')} ────────\n", "head")
             text.insert(END, f"> {e.get('input','')}\n\n", "input")
             text.insert(END, f"{e.get('narrative','')}\n")
-        text.insert(END, "\n（END）\n")
+        text.insert(END, "\n(END)\n")
         text.config(state=DISABLED)
 
     def on_open_world_doc(self):
         """世界档案（2026-08-15）：世界观总述/剧情线/NPC关系/世界大事记 只读展示"""
         dlg = tk.Toplevel(self.root)
-        dlg.title("世界档案")
+        dlg.title("World Archive")
         dlg.transient(self.root)
         from . import place_window
         place_window(dlg, _s(820), _s(780), min_w=_s(560), min_h=_s(440), parent=self.root)
@@ -1163,43 +1163,43 @@ class GameWindow(GameEngine):
         text.tag_config("head", foreground=COLOR_TAG_INPUT, font=FONT_PANEL_TITLE)
         text.config(state=NORMAL)
         # 世界观
-        text.insert(END, "【世界】\n", "head")
-        text.insert(END, f"{self.game.world_template.get('world_description','（无）')}\n\n")
+        text.insert(END, "[World]\n", "head")
+        text.insert(END, f"{self.game.world_template.get('world_description','(none)')}\n\n")
         # 剧情线
-        text.insert(END, "【剧情线】\n", "head")
+        text.insert(END, "[Story Threads]\n", "head")
         threads = self.game.get_story_threads()
         if threads:
-            status_cn = {"active": "进行中", "dormant": "蛰伏", "resolved": "已了结"}
+            status_cn = {"active": "Active", "dormant": "Dormant", "resolved": "Resolved"}
             for t in threads:
                 if not isinstance(t, dict):
                     continue
                 tag = status_cn.get(t.get("status", ""), "")
-                text.insert(END, f"• {t.get('title','')}（{tag}·{t.get('stage','')}）\n")
-                text.insert(END, f"  下一步：{t.get('next_beat','')}\n")
+                text.insert(END, f"• {t.get('title','')}({tag} · {t.get('stage','')})\n")
+                text.insert(END, f"  Next: {t.get('next_beat','')}\n")
         else:
-            text.insert(END, "（暂无剧情线）\n")
+            text.insert(END, "(no story threads yet)\n")
         text.insert(END, "\n")
         # NPC 关系
-        text.insert(END, "【人物关系】\n", "head")
+        text.insert(END, "[Relationships]\n", "head")
         for npc_id, npc in list(self.game.npcs.items()):
             name = npc.get("name", npc_id)
             role = npc.get("role", "")
             rel = npc.get("relationship_to_player", "")
-            text.insert(END, f"• {name}（{role}）：{rel}\n")
+            text.insert(END, f"• {name} ({role}): {rel}\n")
             mem = self.game.get_npc_memories_for_p1(npc_id)
             strong = [m for m in mem if isinstance(m, dict) and m.get("importance", 0) >= 3]
             if strong:
-                text.insert(END, f"  · 记忆：{strong[0].get('event','')}\n")
+                text.insert(END, f"  · Memory: {strong[0].get('event','')}\n")
         text.insert(END, "\n")
         # 世界大事记
-        text.insert(END, "【世界大事记】\n", "head")
+        text.insert(END, "[World Chronicle]\n", "head")
         events = [f.get("content", "") for f in self.game.known_facts
                   if is_world_event(f)]
         if events:
             for ev in events[-10:]:
                 text.insert(END, f"• {ev}\n")
         else:
-            text.insert(END, "（尚无世界大事）\n")
+            text.insert(END, "(no world events yet)\n")
         text.insert(END, "\n")
         text.config(state=DISABLED)
 
@@ -1207,15 +1207,15 @@ class GameWindow(GameEngine):
         """回退到上一回合（撤销本回合）：恢复快照 + 删除叙事区本回合内容 + 刷新HUD。
         仅当本回合输出全部完成后可点（_set_left_busy 已控制处理中禁用）"""
         if self.is_processing():
-            messagebox.showinfo("请稍候", "当前回合还在处理中，请等待完成后再回退。")
+            messagebox.showinfo("Please Wait", "A turn is still being processed. Please wait for it to finish before rolling back.")
             return
         if not self.game.has_rollback_snapshot():
-            messagebox.showinfo("回退", "没有可回退的上一回合。")
+            messagebox.showinfo("Roll Back", "There is no previous turn to roll back to.")
             return
-        if not messagebox.askyesno("回退", "确定回退到上一回合吗？本回合的叙事、状态与存档将撤销。"):
+        if not messagebox.askyesno("Roll Back", "Roll back to the previous turn? This turn's narrative, state, and save will be undone."):
             return
         if not self.game.restore_rollback_snapshot():
-            messagebox.showinfo("回退", "回退失败：快照不可用。")
+            messagebox.showinfo("Roll Back", "Roll back failed: snapshot unavailable.")
             return
         # 删除叙事区本回合内容（从提交时记录的 mark 到末尾）
         try:
@@ -1228,15 +1228,15 @@ class GameWindow(GameEngine):
         self._round_mark = None
         # 刷新HUD：轮次/位置/状态栏（skip_narrative 不重复 append，_set_left_busy(False) 放开入口）
         self._update_after_left("", self.game.player_state, skip_narrative=True)
-        self.append_system("[已回退到上一回合]")
+        self.append_system("[Rolled back to the previous turn]")
 
     def on_return_menu_click(self):
         """返回主菜单"""
         # 修复：回合/查询处理中禁止返回，避免后台线程写已销毁的UI
         if self.is_processing():
-            self.append_system("[当前正在处理中，请稍候片刻再返回]")
+            self.append_system("[Still processing — please wait a moment before leaving]")
             return
-        if messagebox.askyesno("确认", "确定要返回主菜单吗？当前进度已自动保存。"):
+        if messagebox.askyesno("Confirm", "Return to the main menu? Your progress has been saved automatically."):
             # 不再在此预销毁 frame——统一由 main._clear_frame 负责销毁（预销毁会导致
             # 主菜单双 destroy 已销毁控件而崩溃，2026-08-14 修复）
             self.on_return_menu()

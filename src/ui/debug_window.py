@@ -40,7 +40,7 @@ class DebugWindow:
 
         self.parent = parent
         self.window = tk.Toplevel(parent) if parent else tk.Tk()
-        self.window.title("API调试窗口")
+        self.window.title("API Debug Window")
         # 相对父窗口居中，尺寸随屏幕自适应且不越界
         # 2026-08-15 用户定：长宽都改为原来的1.5倍（1000×700 → 1500×1050）；随分辨率缩放
         place_window(self.window, _s(1500), _s(1050), min_w=_s(700), min_h=_s(450), parent=parent)
@@ -83,10 +83,10 @@ class DebugWindow:
         ctrl_frame = ttk.Frame(self.window)
         ctrl_frame.pack(fill=tk.X, padx=_s(10), pady=_s(5))
 
-        ttk.Label(ctrl_frame, text="API调用日志", font=(FONT_FAMILY, font_size(14), "bold")).pack(side=tk.LEFT)
+        ttk.Label(ctrl_frame, text="API Call Log", font=(FONT_FAMILY, font_size(14), "bold")).pack(side=tk.LEFT)
 
-        ttk.Button(ctrl_frame, text="清空", command=self.clear).pack(side=tk.RIGHT, padx=_s(5))
-        ttk.Button(ctrl_frame, text="导出日志", command=self.export).pack(side=tk.RIGHT, padx=_s(5))
+        ttk.Button(ctrl_frame, text="Clear", command=self.clear).pack(side=tk.RIGHT, padx=_s(5))
+        ttk.Button(ctrl_frame, text="Export log", command=self.export).pack(side=tk.RIGHT, padx=_s(5))
 
         # 日志列表（左侧：调用摘要）
         paned = ttk.Panedwindow(self.window, orient=tk.HORIZONTAL)
@@ -99,10 +99,10 @@ class DebugWindow:
         # 列表标题
         columns = ("time", "type", "model", "status")
         self.tree = ttk.Treeview(left_frame, columns=columns, show="headings", height=_s(20))
-        self.tree.heading("time", text="时间")
-        self.tree.heading("type", text="类型")
-        self.tree.heading("model", text="模型")
-        self.tree.heading("status", text="状态")
+        self.tree.heading("time", text="Time")
+        self.tree.heading("type", text="Type")
+        self.tree.heading("model", text="Model")
+        self.tree.heading("status", text="Status")
         self.tree.column("time", width=_s(80))
         self.tree.column("type", width=_s(80))
         self.tree.column("model", width=_s(120))
@@ -123,7 +123,7 @@ class DebugWindow:
 
         # 请求页
         req_frame = ttk.Frame(self.detail_notebook, padding=_s(5))
-        self.detail_notebook.add(req_frame, text=" 请求 ")
+        self.detail_notebook.add(req_frame, text=" Request ")
         self.req_text = tk.Text(req_frame, wrap=tk.WORD, font=("Consolas", font_size(11)),
                                  bg=COLOR_BG_CODE, fg=COLOR_FG_CODE,
                                  padx=_s(10), pady=_s(10), insertbackground="white")
@@ -134,7 +134,7 @@ class DebugWindow:
 
         # 响应页
         resp_frame = ttk.Frame(self.detail_notebook, padding=_s(5))
-        self.detail_notebook.add(resp_frame, text=" 响应 ")
+        self.detail_notebook.add(resp_frame, text=" Response ")
         self.resp_text = tk.Text(resp_frame, wrap=tk.WORD, font=("Consolas", font_size(11)),
                                   bg=COLOR_BG_CODE, fg=COLOR_FG_CODE,
                                   padx=_s(10), pady=_s(10), insertbackground="white")
@@ -170,7 +170,7 @@ class DebugWindow:
     def _format_json(self, data):
         """格式化JSON数据为可读字符串"""
         if not data:
-            return "(无数据)"
+            return "(No data)"
         try:
             return json.dumps(data, ensure_ascii=False, indent=2)
         except:
@@ -226,8 +226,8 @@ class DebugWindow:
         from tkinter import filedialog
         filename = filedialog.asksaveasfilename(
             defaultextension=".json",
-            filetypes=[("JSON", "*.json"), ("文本", "*.txt")],
-            title="导出API日志"
+            filetypes=[("JSON", "*.json"), ("Text", "*.txt")],
+            title="Export API log"
         )
         if not filename:
             return
@@ -241,7 +241,7 @@ class DebugWindow:
                 json.dump(export_data, f, ensure_ascii=False, indent=2)
         except Exception as e:
             import tkinter.messagebox as msgbox
-            msgbox.showerror("导出失败", str(e))
+            msgbox.showerror("Export failed", str(e))
 
     def show(self):
         """显示窗口"""
