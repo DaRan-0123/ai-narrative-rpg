@@ -350,9 +350,14 @@ class GameState:
             self.pending_facts.append(fact_data)
 
     def update_player_state(self, new_state):
-        """更新玩家状态"""
+        """增量合并玩家状态（不是整体替换）。
+        P1 的 player_state 只是它 schema 里声明的那几个字段的子集，程序自己维护的
+        game_day 等键不在其中；整体替换会把它们抹掉——表现就是日历每轮从季节第一天
+        重新起算，永远不累积。合并后 P1 只管它声明的字段，其余键由各自的主人维护。"""
         with STATE_LOCK:
-            self.player_state = new_state
+            if not isinstance(new_state, dict):
+                return
+            self.player_state.update(new_state)
 
     # ===== 游戏内日历（季节由日历驱动，见 docs/season_weather_design.md）=====
 
