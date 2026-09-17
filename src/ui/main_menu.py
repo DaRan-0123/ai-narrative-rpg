@@ -13,7 +13,7 @@ from ttkbootstrap.constants import *
 
 from . import (FONT_FAMILY, RESOLUTION_OPTIONS, DEFAULT_RESOLUTION, place_window,
                SCALE, font_size, PROVIDER_PRESETS, LOCAL_PLACEHOLDER_KEY)
-from ..save_manager import list_saves, delete_save
+from ..save_manager import list_saves, delete_save, slot_display
 from ..config import get_config
 
 
@@ -437,8 +437,8 @@ class MainMenu:
             row = ttk.Frame(self.save_list_frame)
             row.pack(fill=X, pady=_s(2))
 
-            # 存档名称
-            name_label = ttk.Label(row, text=save["name"], width=_s(15))
+            # 存档名称（display 是给人看的；下面的操作仍用 name 目录名）
+            name_label = ttk.Label(row, text=save["display"], width=_s(15))
             name_label.pack(side=LEFT)
 
             if save["exists"]:
@@ -458,9 +458,10 @@ class MainMenu:
         SettingsDialog(self.root)
 
     def on_delete_save(self, save_name):
-        if messagebox.askyesno("Confirm deletion", f"Delete save '{save_name}'?"):
+        shown = slot_display(save_name)
+        if messagebox.askyesno("Confirm deletion", f"Delete save '{shown}'?"):
             if delete_save(save_name):
-                messagebox.showinfo("Deleted", f"Save '{save_name}' has been deleted")
+                messagebox.showinfo("Deleted", f"Save '{shown}' has been deleted")
                 self.refresh_save_list()
             else:
                 messagebox.showerror("Delete failed", "Save does not exist")

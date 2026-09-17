@@ -54,8 +54,27 @@ def _normalize_last_played(raw):
         return None
 
 
+# 自动槽位的目录名（中文，不动，见 slot_display 注释）
+_SLOT_RE = re.compile(r"^(?:存档|Save\s*)(\d+)$")
+
+
+def slot_display(name):
+    """槽位目录名 → 界面显示名：存档3 → Save 3。
+
+    只改显示。目录名保持"存档N"——它同时是 saves/ 下的目录名、服务版的
+    引擎注册表 key、以及 HTTP URL 路径段，改名会孤立已有存档。玩家看不见
+    目录名，所以这里做一层映射就够了。用户自己取名的存档（如"老陈的旅途"）
+    不是自动槽位，原样返回。
+    """
+    m = _SLOT_RE.match(str(name or ""))
+    return f"Save {m.group(1)}" if m else name
+
+
 def list_saves():
-    """返回所有存档的列表"""
+    """返回所有存档的列表。
+
+    每项同时给出 name（目录名/操作键，勿用于显示）与 display（显示名）。
+    """
     ensure_saves_dir()
     saves = []
     for entry in sorted(SAVES_DIR.iterdir()):
@@ -78,6 +97,7 @@ def list_saves():
                 lp = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
             saves.append({
                 "name": entry.name,
+                "display": slot_display(entry.name),
                 "path": str(entry),
                 "last_played": lp,
                 "rounds": meta.get("rounds", 0),
@@ -91,15 +111,17 @@ def list_saves():
         if slot_name not in existing_names:
             saves.append({
                 "name": slot_name,
+                "display": f"Save {i}",
                 "path": str(SAVES_DIR / slot_name),
-                "last_played": "空",
+                "last_played": "",
                 "rounds": 0,
                 "exists": False
             })
 
-    # 存档槽位按数字自然排序（"存档2" < "存档10"），非"存档N"名字（如"老陈的旅途"）排在最前
+    # 槽位按数字自然排序（第2位 < 第10位）；非槽位名字（如"老陈的旅途"）排在最后。
+    # 正则双语：旧档目录是"存档N"，将来若有"Save N"目录也认，避免 Save 10 排到 Save 2 前面。
     def _slot_key(s):
-        m = re.match(r"^存档(\d+)$", s["name"])
+        m = _SLOT_RE.match(s["name"])
         return (0, int(m.group(1))) if m else (1, 0, s["name"])
     return sorted(saves, key=_slot_key)
 

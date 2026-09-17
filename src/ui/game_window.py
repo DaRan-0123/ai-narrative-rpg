@@ -1062,10 +1062,10 @@ class GameWindow(GameEngine):
             _draw_card_bg(card)
             # 名称 + 信息
             if s["exists"]:
-                title = f"{s['name']}"
+                title = s["display"]
                 info = f"Round {s['rounds']} · Last played {s['last_played']}"
             else:
-                title = f"{s['name']} (empty)"
+                title = f"{s['display']} (empty)"
                 info = "No save here yet — you can save directly"
             card.create_text(12, 16, anchor="w", text=title, fill=COLOR_FG_MAIN,
                              font=FONT_PANEL_TITLE)
@@ -1084,20 +1084,22 @@ class GameWindow(GameEngine):
             if idx is None:
                 messagebox.showinfo("Manual Save", "Select a save slot first.", parent=dlg)
                 return
+            # target 是目录名（操作键）；显示一律用 display
             target = saves[idx]["name"]
+            shown = saves[idx]["display"]
             if saves[idx]["exists"]:
                 if not messagebox.askyesno(
                         "Confirm Overwrite",
-                        f"Save slot \"{target}\" already has a save (Round {saves[idx]['rounds']}).\n"
+                        f"Save slot \"{shown}\" already has a save (Round {saves[idx]['rounds']}).\n"
                         "Overwrite it?",
                         parent=dlg):
                     return
             dlg.destroy()
             ok = self.game.save_to_slot(target)
             if ok:
-                self.append_system(f"[Saved to {target}]")
+                self.append_system(f"[Saved to {shown}]")
             else:
-                messagebox.showerror("Manual Save", f"Failed to save to {target}", parent=self.root)
+                messagebox.showerror("Manual Save", f"Failed to save to {shown}", parent=self.root)
 
         ttk.Button(btn_row, text="Save to Selected Slot", command=_do_save,
                    bootstyle=INFO, width=_s(22)).pack(side=LEFT, padx=(0, _s(8)))
