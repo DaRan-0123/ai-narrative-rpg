@@ -12,6 +12,9 @@ import threading
 from pathlib import Path
 from datetime import datetime
 
+from .vocab import (SRC_WORLD_SEED, SRC_PROTAGONIST_SEED, CAT_WORLDVIEW,
+                    CAT_LOCATION, CAT_PROTAGONIST, CAT_NPC)
+
 if getattr(sys, "frozen", False):
     # 打包成 exe：存档放 exe 同级的 saves/。
     # 不能用 __file__——onefile 模式下它指向临时解压目录，存档会随退出消失
@@ -168,13 +171,13 @@ class SaveManager:
 
         # 玩家状态
         initial_state = world_data.get("initial_player_state", {
-            "current_location": "未知地点",
-            "posture_action": "站立",
-            "clothing_equipment": "普通衣物",
-            "physical_health": "健康",
-            "transportation": "无（步行）",
-            "weather_environment": "晴朗",
-            "current_scene_people": "独自一人"
+            "current_location": "Unknown location",
+            "posture_action": "standing",
+            "clothing_equipment": "plain clothes",
+            "physical_health": "healthy",
+            "transportation": "none (on foot)",
+            "weather_environment": "clear",
+            "current_scene_people": "alone"
         })
         save_json(self.save_path, "player_state.json", initial_state)
 
@@ -185,73 +188,73 @@ class SaveManager:
         world_desc = world_data.get("world_description", "")
         if world_desc:
             initial_facts.append({
-                "content": f"世界观：{world_desc[:200]}",
-                "source": "世界初始化",
-                "category": "世界观"
+                "content": f"Worldview: {world_desc[:600]}",
+                "source": SRC_WORLD_SEED,
+                "category": CAT_WORLDVIEW
             })
         
         social_fw = world_data.get("social_framework", "")
         if social_fw:
             initial_facts.append({
-                "content": f"社会框架：{social_fw[:200]}",
-                "source": "世界初始化",
-                "category": "世界观"
+                "content": f"Social framework: {social_fw[:600]}",
+                "source": SRC_WORLD_SEED,
+                "category": CAT_WORLDVIEW
             })
         
         area_desc = world_data.get("starting_area_description", "")
         if area_desc:
             initial_facts.append({
-                "content": f"初始区域：{area_desc[:200]}",
-                "source": "世界初始化",
-                "category": "地点"
+                "content": f"Starting area: {area_desc[:600]}",
+                "source": SRC_WORLD_SEED,
+                "category": CAT_LOCATION
             })
         
         # 主角事实
-        player_name = player_info.get("name", "无名者")
+        player_name = player_info.get("name", "Unnamed")
         player_appearance = player_info.get("appearance", "")
         player_background = player_info.get("background", "")
         initial_facts.append({
-            "content": f"主角名字：{player_name}",
-            "source": "主角创建",
-            "category": "主角"
+            "content": f"Player name: {player_name}",
+            "source": SRC_PROTAGONIST_SEED,
+            "category": CAT_PROTAGONIST
         })
         if player_appearance:
             initial_facts.append({
-                "content": f"主角外貌：{player_appearance}",
-                "source": "主角创建",
-                "category": "主角"
+                "content": f"Player appearance: {player_appearance}",
+                "source": SRC_PROTAGONIST_SEED,
+                "category": CAT_PROTAGONIST
             })
         if player_background:
             initial_facts.append({
-                "content": f"主角背景：{player_background}",
-                "source": "主角创建",
-                "category": "主角"
+                "content": f"Player background: {player_background}",
+                "source": SRC_PROTAGONIST_SEED,
+                "category": CAT_PROTAGONIST
             })
         
         # NPC事实
         for npc in world_data.get("initial_npcs", []):
-            npc_name = npc.get("name", "未知")
+            npc_name = npc.get("name", "Unknown")
             npc_role = npc.get("role", "")
             npc_background = npc.get("background", "")
-            npc_rel = npc.get("relationship_to_player", "未知")
+            npc_rel = npc.get("relationship_to_player", "Unknown")
             fact_content = f"NPC {npc_name}"
             if npc_role:
-                fact_content += f"，身份是{npc_role}"
+                fact_content += f", role: {npc_role}"
             if npc_background:
-                fact_content += f"，背景：{npc_background[:100]}"
-            fact_content += f"，与玩家关系：{npc_rel}"
+                fact_content += f", background: {npc_background[:300]}"
+            fact_content += f", relationship to player: {npc_rel}"
             initial_facts.append({
                 "content": fact_content,
-                "source": "世界初始化",
-                "category": "NPC"
+                "source": SRC_WORLD_SEED,
+                "category": CAT_NPC
             })
         
         # 初始位置
-        init_loc = initial_state.get("current_location", "未知地点")
+        init_loc = initial_state.get("current_location", "Unknown location")
         initial_facts.append({
-            "content": f"当前位置：{init_loc}",
-            "source": "世界初始化",
-            "category": "地点"
+            "content": f"Current location: {init_loc}",
+            "source": SRC_WORLD_SEED,
+            "category": CAT_LOCATION
         })
         
         save_json(self.save_path, "known_facts.json", initial_facts)
@@ -272,7 +275,7 @@ class SaveManager:
             "created_at": datetime.now().isoformat(),
             "last_played": datetime.now().isoformat(),
             "rounds": 0,
-            "player_name": player_info.get("name", "无名者")
+            "player_name": player_info.get("name", "Unnamed")
         })
 
         return True

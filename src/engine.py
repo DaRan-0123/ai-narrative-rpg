@@ -36,6 +36,7 @@ from .prompts import (
 from .vocab import (
     normalize_far_direction, normalize_world_level,
     is_absent, is_worldview_base, is_world_event,
+    SRC_EXPLORATION, SRC_ITEM, SRC_ENVIRONMENT, SRC_WORLD_EVENT, SRC_COMPACTION,
 )
 
 # P12远方方位枚举在 src/vocab.py（校验用，见 docs/p12_map_design.md 第五节）
@@ -278,7 +279,7 @@ class GameEngine:
                     for field in missing_fields:
                         player_state[field] = self._default_state_value(field)
 
-            narrative = result.get("narrative") or "【叙事生成异常】"
+            narrative = result.get("narrative") or "[Narrative generation failed]"
 
             # 更新游戏状态
             self.game.update_player_state(player_state)
@@ -347,21 +348,21 @@ class GameEngine:
                             return merged_npc
                         else:
                             # P6失败，回退
-                            entity["role"] = entity.get("description", "未知身份")[:60]
+                            entity["role"] = entity.get("description", "Unknown role")[:60]
                             entity["appearance"] = entity.get("description", "")
-                            entity["personality"] = "未知"
-                            entity["background"] = "未知"
-                            entity["relationship_to_player"] = "未知"
-                            entity["psychology_log"] = ["初始状态"]
+                            entity["personality"] = "Unknown"
+                            entity["background"] = "Unknown"
+                            entity["relationship_to_player"] = "Unknown"
+                            entity["psychology_log"] = ["Initial state"]
                             return entity
                     except Exception:
                         # 异常回退
-                        entity["role"] = entity.get("description", "未知身份")[:60]
+                        entity["role"] = entity.get("description", "Unknown role")[:60]
                         entity["appearance"] = entity.get("description", "")
-                        entity["personality"] = "未知"
-                        entity["background"] = "未知"
-                        entity["relationship_to_player"] = "未知"
-                        entity["psychology_log"] = ["初始状态"]
+                        entity["personality"] = "Unknown"
+                        entity["background"] = "Unknown"
+                        entity["relationship_to_player"] = "Unknown"
+                        entity["psychology_log"] = ["Initial state"]
                         return entity
 
                 # 并发执行所有P6调用
@@ -381,13 +382,13 @@ class GameEngine:
                         entity_type = entity.get("type")
                         if entity_type == "location":
                             self.game.add_fact({
-                                "content": f"地点：{entity.get('name', '未知')} - {entity.get('description', '')}",
-                                "source": "探索发现"
+                                "content": f"Location: {entity.get('name', 'Unknown')} - {entity.get('description', '')}",
+                                "source": SRC_EXPLORATION
                             })
                         elif entity_type == "item":
                             self.game.add_fact({
-                                "content": f"物品：{entity.get('name', '未知')} - {entity.get('description', '')}",
-                                "source": "获得物品"
+                                "content": f"Item: {entity.get('name', 'Unknown')} - {entity.get('description', '')}",
+                                "source": SRC_ITEM
                             })
 
             # 处理npc_notes -> 调用P4进行深度心理分析（P1可能输出null，兜底为空dict）
@@ -406,7 +407,7 @@ class GameEngine:
                         if p4_ok:
                             self.game.add_npc_psychology(npc_id, {
                                 "round": self.game.current_round,
-                                "event": f"第{self.game.current_round}轮互动",
+                                "event": f"Round {self.game.current_round} interaction",
                                 "p4_analysis": p4_result
                             })
                             # 写入情景记忆（memory_entry为null则跳过，向后兼容旧输出）
@@ -416,14 +417,14 @@ class GameEngine:
                         else:
                             self.game.add_npc_psychology(npc_id, {
                                 "round": self.game.current_round,
-                                "event": f"第{self.game.current_round}轮互动",
+                                "event": f"Round {self.game.current_round} interaction",
                                 "impact": str(note)
                             })
                         p4_updated_npcs.append(npc_id)
                     except Exception:
                         self.game.add_npc_psychology(npc_id, {
                             "round": self.game.current_round,
-                            "event": f"第{self.game.current_round}轮互动",
+                            "event": f"Round {self.game.current_round} interaction",
                             "impact": str(note)
                         })
 
@@ -625,15 +626,15 @@ class GameEngine:
     def _default_state_value(self, field):
         """缺失字段的默认值"""
         defaults = {
-            "current_location": "未知地点",
-            "posture_action": "站立",
-            "clothing_equipment": "普通衣物",
-            "physical_health": "健康",
-            "transportation": "无（步行）",
-            "weather_environment": "晴朗",
-            "current_scene_people": "独自一人"
+            "current_location": "Unknown location",
+            "posture_action": "standing",
+            "clothing_equipment": "plain clothes",
+            "physical_health": "healthy",
+            "transportation": "none (on foot)",
+            "weather_environment": "clear",
+            "current_scene_people": "alone"
         }
-        return defaults.get(field, "未知")
+        return defaults.get(field, "Unknown")
 
     def _call_p3_async(self, narrative):
         """异步调用P3事实提取（含时间/天气/季节迹象，见 docs/season_weather_design.md）"""
@@ -678,7 +679,7 @@ class GameEngine:
             # 季节迹象只记录为普通事实，不改变日历驱动的季节（v1简化）
             sign = extra.get("season_sign")
             if isinstance(sign, str) and not is_absent(sign):
-                self.game.add_fact({"content": f"季节迹象：{sign.strip()}", "source": "环境观察"})
+                self.game.add_fact({"content": f"Seasonal sign: {sign.strip()}", "source": SRC_ENVIRONMENT})
         except Exception as e:
             # 失败原因必须打出来：只说"提取失败"的话，限流、断网、解析错、
             # 提示词超长都长一个样，排查时等于没有线索
@@ -714,7 +715,7 @@ class GameEngine:
                 return
 
             # 1) 写入已知事实
-            self.game.add_fact({"content": f"世界事件：{desc}", "source": "世界事件"})
+            self.game.add_fact({"content": f"World event: {desc}", "source": SRC_WORLD_EVENT})
             # 2) 改写世界观（world_description）并落盘
             new_world = str(data.get("updated_world_description") or "").strip()
             if new_world and self.game.world_template.get("world_description") != new_world:
@@ -787,7 +788,7 @@ class GameEngine:
             added = 0
             for s in summaries[:3]:
                 if isinstance(s, str) and s.strip():
-                    self.game.add_fact({"content": s.strip(), "source": "事实压缩", "confidence": "medium"})
+                    self.game.add_fact({"content": s.strip(), "source": SRC_COMPACTION, "confidence": "medium"})
                     added += 1
             self._facts_compact_round = self.game.current_round
             print(f"[压缩] 已把 {len(old)} 条旧事实归档（完整保留）并合并为 {added} 条概述")
@@ -879,7 +880,7 @@ class GameEngine:
                 "event": str(summary.get("event", "")),
                 "perception": str(summary.get("perception", "")),
                 "importance": 2,
-                "tags": ["概述"],
+                "tags": ["overview"],
             }
             new_log, merged = self._build_consolidated_log(log, summary_entry)
             self.game.replace_npc_memories(npc_id, new_log)
@@ -905,10 +906,10 @@ class GameEngine:
             recent = game.get_recent_history(10)
             history_summary = ""
             for entry in recent:
-                history_summary += (f"第{entry.get('round', '?')}轮: {entry.get('input', '')}"
+                history_summary += (f"Round {entry.get('round', '?')}: {entry.get('input', '')}"
                                     f" → {entry.get('narrative', '')[:80]}\n")
             if not history_summary:
-                history_summary = "（暂无历史）\n"
+                history_summary = "(no history yet)\n"
 
             # 全场NPC伏笔汇总（plot_hooks + 秘密）
             npc_hooks = ""
@@ -919,15 +920,15 @@ class GameEngine:
                 if hooks or secrets:
                     npc_hooks += f"【{name}】\n"
                     for h in hooks:
-                        npc_hooks += f"  - 伏笔: {h}\n"
+                        npc_hooks += f"  - Hook: {h}\n"
                     for s in secrets:
-                        npc_hooks += f"  - 秘密: {s}\n"
+                        npc_hooks += f"  - Secret: {s}\n"
             if not npc_hooks:
-                npc_hooks = "（暂无）\n"
+                npc_hooks = "(none)\n"
 
             # 最近30条已知事实
             facts_summary = game.get_known_facts_summary()
-            recent_facts = "\n".join(f"- {f}" for f in facts_summary[-30:]) or "（暂无）"
+            recent_facts = "\n".join(f"- {f}" for f in facts_summary[-30:]) or "(none)"
 
             p11_user = build_p11_user(
                 existing_threads=game.get_story_threads(),
@@ -1108,16 +1109,16 @@ class GameEngine:
                 relationships = []
                 for npc_id, npc in list(self.game.npcs.items()):
                     name = npc.get("name", npc_id)
-                    rel = npc.get("relationship_to_player", "未知")
+                    rel = npc.get("relationship_to_player", "Unknown")
                     role = npc.get("role", "")
                     logs = npc.get("psychology_log", [])
                     recent_log = logs[-1] if logs else ""
                     relationships.append(
-                        f"- {name}（{role}）：与玩家关系为'{rel}'。"
-                        f"最近心理：{recent_log}"
+                        f"- {name} ({role}): relationship to player is {rel}."
+                        f"Latest state of mind: {recent_log}"
                     )
 
-                rel_context = "【玩家的人际关系】\n" + "\n".join(relationships) if relationships else "暂无记录"
+                rel_context = "[Player relationships]\n" + "\n".join(relationships) if relationships else "No records."
 
                 p2_user = f"""{build_p2_user(
                     known_facts=self.game.known_facts,

@@ -305,8 +305,8 @@ def build_p1_user(world_template, player_state, action_history, known_facts_summ
     "transportation": "交通工具，必须非空（如'无（步行）'）",
     "weather_environment": "天气和环境，必须非空",
     "current_scene_people": "当前场景中可感知的人，必须非空；场景里只有主角一人时，原样填 \"alone\"",
-    "game_season": "当前季节（如'春季''夏季''秋季''冬季'），可选但建议填写",
-    "game_time": "当前时间（如'清晨''正午''傍晚''深夜'），可选但建议填写",
+    "game_season": "当前季节（必须是 Spring / Summer / Autumn / Winter 之一），可选但建议填写",
+    "game_time": "当前时间（必须是 Dawn / Noon / Evening / Night 之一），可选但建议填写",
     "appearance": "主角当前外貌和衣着描述，可选但建议填写"
   }},
   "facts_delta": [

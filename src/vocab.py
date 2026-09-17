@@ -106,6 +106,38 @@ def normalize_style(value):
     return _STYLE_ALIASES.get(token, _STYLE_ALIASES.get(token.replace(" ", ""), ""))
 
 
+# ===== game season / time of day =====
+# Written by the code (get_season / get_game_time), but also emitted by P1 as
+# free text and stored in old saves under the Chinese names.
+SEASON_NAMES = ("Spring", "Summer", "Autumn", "Winter")
+
+# Order matters: first hit wins. ASCII tokens match on word boundaries so that
+# "fall" does not fire inside "rainfall"; CJK tokens match as substrings so that
+# "深秋" and "初春" still resolve.
+_SEASON_ALIASES = {
+    "spring": "Spring", "summer": "Summer",
+    "autumn": "Autumn", "fall": "Autumn", "winter": "Winter",
+    "春": "Spring", "夏": "Summer", "秋": "Autumn", "冬": "Winter",
+}
+
+
+def match_season(value):
+    """Season named anywhere in the text, or "" — handles '深秋' and 'late autumn'."""
+    text = str(value or "").strip().lower()
+    if not text:
+        return ""
+    for token, season in _SEASON_ALIASES.items():
+        if token.isascii():
+            if re.search(r"\b%s\b" % re.escape(token), text):
+                return season
+        elif token in text:
+            return season
+    return ""
+
+
+TIME_NAMES = ("Dawn", "Noon", "Evening", "Night")
+
+
 # ===== fact.source / fact.category =====
 # Not player-visible, but source is echoed into the P2 prompt ("（来源: …）")
 # and both are matched by the P1 fact selector and the fact compactor.

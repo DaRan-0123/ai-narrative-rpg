@@ -9,7 +9,8 @@ import threading
 from datetime import datetime
 from .save_manager import SaveManager
 from .config import get_config
-from .vocab import is_worldview_base, normalize_style
+from .vocab import (SEASON_NAMES, SRC_NARRATION, TIME_NAMES, is_worldview_base,
+                    match_season, normalize_style)
 
 # NPC档案写操作锁：保护异步任务（P4C记忆巩固）与主循环对npcs的并发修改
 # 锁定顺序约定：NPCS_LOCK 只用于内存字典修改（O(1)），持锁期间绝不调用API或写盘
@@ -51,7 +52,7 @@ def select_memories_for_p1(memory_log, max_items=4):
 # ===== 游戏内日历：季节/天气动态（见 docs/season_weather_design.md）=====
 
 # 默认历法：一年4季×30天=360天（自定义历法经 world_template.calendar 留接口）
-SEASONS = ["春季", "夏季", "秋季", "冬季"]
+SEASONS = list(SEASON_NAMES)
 DAYS_PER_SEASON = 30
 # time_passed 解析失败/缺失时的兜底：每轮按0.25天（约6小时）推进
 TIME_FALLBACK_DAYS = 0.25
@@ -99,7 +100,7 @@ def select_facts_for_p1(known_facts, limit=40):
     """P1/P14注入用事实选取（纯函数，2026-08-14 截断策略）：
     known_facts 追加式增长，全量注入会让 P1 前缀越来越贵（HANDOVER 7.2.4）。
     选取（去重，最多 limit 条）：
-    1. 世界观基盘（source含'世界观'）——叙事连贯的根基，永不失
+    1. 世界观基盘（category 为 'worldview'，旧档兼容 source 含'世界观'）——叙事连贯的根基，永不失
     2. 最近 limit 条的一半（较新信息，叙事仍在用）
     3. 高置信 high 的补足剩余额度（重要结论保留）
     返回：截断后的原文（dict/str），顺序：世界观基盘 → 最近的 → 高置信"""
@@ -345,7 +346,7 @@ class GameState:
             if isinstance(fact_data, dict) and "content" in fact_data:
                 self.known_facts.append(fact_data)
             elif isinstance(fact_data, str):
-                self.known_facts.append({"content": fact_data, "source": "叙事"})
+                self.known_facts.append({"content": fact_data, "source": SRC_NARRATION})
             self.pending_facts.append(fact_data)
 
     def update_player_state(self, new_state):
@@ -361,11 +362,11 @@ class GameState:
         with STATE_LOCK:
             if "game_day" not in self.player_state:
                 init_day = 1.0
-                season_text = str(self.player_state.get("game_season", ""))
-                for i, name in enumerate(SEASONS):
-                    if name[0] in season_text:  # 如 '秋' in '深秋'
-                        init_day = float(i * DAYS_PER_SEASON + 1)
-                        break
+                # 旧档的 game_season 是中文自由文本（如"深秋"），英文的
+                # "Spring"/"Summer" 首字母相同，取首字符比对会误对齐到第1天
+                matched = match_season(self.player_state.get("game_season", ""))
+                if matched:
+                    init_day = float(SEASONS.index(matched) * DAYS_PER_SEASON + 1)
                 self.player_state["game_day"] = init_day
             try:
                 return float(self.player_state.get("game_day", 1.0))
@@ -391,7 +392,7 @@ class GameState:
 
     def get_date_display(self):
         """日期显示文本：第X天 · 季节（game_day浮点存储，显示取整）"""
-        return f"第{int(self.get_game_day())}天 · {self.get_season()}"
+        return f"Day {int(self.get_game_day())} · {self.get_season()}"
 
     def get_game_time(self):
         """当前时段（2026-08-15 game_time 联动日历）：由 game_day 的小数部分推算。
@@ -401,14 +402,14 @@ class GameState:
             frac = self.get_game_day() - int(self.get_game_day())
             hour = int(frac * 24) % 24
         except (TypeError, ValueError):
-            return "正午"
+            return TIME_NAMES[1]
         if hour < 6:
-            return "清晨"
+            return TIME_NAMES[0]
         if hour < 13:   # 6:00-12:59 正午（含12:00）
-            return "正午"
+            return TIME_NAMES[1]
         if hour < 19:   # 13:00-18:59 傍晚
-            return "傍晚"
-        return "深夜"    # 19:00-23:59
+            return TIME_NAMES[2]
+        return TIME_NAMES[3]    # 19:00-23:59
 
     # ===== 剧情线（P11故事师维护，见 docs/story_generator_design.md）=====
 
@@ -573,12 +574,12 @@ class GameState:
             # 构建NPC基础档案
             npc_data = {
                 "npc_id": npc_id,
-                "name": entity.get("name", "未知"),
-                "role": entity.get("role", "未知"),
+                "name": entity.get("name", "Unknown"),
+                "role": entity.get("role", "Unknown"),
                 "appearance": entity.get("description", ""),
-                "personality": entity.get("personality", "未知"),
-                "background": entity.get("background", "未知"),
-                "relationship_to_player": entity.get("relationship_to_player", "未知"),
+                "personality": entity.get("personality", "Unknown"),
+                "background": entity.get("background", "Unknown"),
+                "relationship_to_player": entity.get("relationship_to_player", "Unknown"),
                 "psychology_log": [],
                 "secrets": entity.get("secrets", [])
             }
@@ -662,7 +663,7 @@ class GameState:
             # 元信息（rounds/player_name + 本次手动保存时间）
             meta = dict(self.meta)
             meta["rounds"] = self.current_round
-            meta["player_name"] = self.player_profile.get("name", "无名者")
+            meta["player_name"] = self.player_profile.get("name", "Unnamed")
             meta["last_played"] = datetime.now().isoformat()
             target.save_meta(meta)
             return True
@@ -688,7 +689,7 @@ class GameState:
         # 元信息
         self.save_manager.update_meta(
             rounds=self.current_round,
-            player_name=self.player_profile.get("name", "无名者")
+            player_name=self.player_profile.get("name", "Unnamed")
         )
 
         # 地图数据（P12地图师）
@@ -764,7 +765,9 @@ class GameState:
 # 坐标系：+x=北、+y=东，1格=100米（docs/p12_map_design.md 第一节）
 
 # 八方位索引：0起顺时针，与 atan2(dx, dy) 角度分档对齐
-_ANCHOR_SECTORS = ["东", "东北", "北", "西北", "西", "西南", "南", "东南"]
+# 注意：这是按角度排序，不是罗盘顺序——改顺序会静默把方位全转错
+_ANCHOR_SECTORS = ["east", "northeast", "north", "northwest",
+                   "west", "southwest", "south", "southeast"]
 
 
 def _direction_from_offset(dx, dy):
@@ -801,16 +804,16 @@ def build_map_anchor_text(places, far_places, player_xy):
         else:
             offsets.append((label, lx - px, ly - py))
     if here:
-        rows.append(f"- {here} → 你正位于此处")
+        rows.append(f"- {here} → you are here")
     # 距离近→远（平方和排序，避免开方）
     offsets.sort(key=lambda o: o[1] * o[1] + o[2] * o[2])
     for label, dx, dy in offsets:
         direction = _direction_from_offset(dx, dy)
         dist_m = int(round((dx * dx + dy * dy) ** 0.5 * 100))
-        rows.append(f"- {label} → {direction}约 {dist_m} 米")
+        rows.append(f"- {label} → {direction}, about {dist_m} m")
     for p in (far_places or []):
         if not isinstance(p, dict):
             continue
         label = str(p.get("label") or p.get("name") or "")
-        rows.append(f"- {label} → 远方·{p.get('direction', '')}")
+        rows.append(f"- {label} → far away, {p.get('direction', '')}")
     return "\n".join(rows)
