@@ -1019,7 +1019,8 @@ class GameEngine:
             return label
         import re as _re
         parts = [p for p in _re.split(r"[，,、]", location_name) if p]
-        return (parts[-1] if parts else location_name)[:24]
+        # strip：英文地名分段是「Old Town, The Harbor Inn」，不 strip 会留下前导空格
+        return (parts[-1].strip() if parts else location_name)[:24]
 
     def _run_p12(self, location_name, narrative):
         """后台线程：P12定位 → 校验 → 落库（2026-08-14地图半封存：图标生成/渲染已封存）"""
