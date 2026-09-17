@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+
+# 存档与运行时数据（含个人游玩记录、立绘、事实归档）
+saves/
+archives/
+
+# 配置与密钥（密钥默认存于用户主目录 ~/.ai_rpg_config.json，此处兜底防止误提交）
+.ai_rpg_config.json
+sk-*.txt
+.env
+*.key
+*.pem
+
+# 离线依赖包（体积大，发布版由 pip install -r requirements.txt 获取）
+vendor_packages/
+
+# 个人设计笔记（不公开；注意别写成 *.txt，会把 requirements.txt 一起排除）
+我的大概框架*.txt
+
+# 截图与临时产出
+_*.png
+_*.jpg
+*.log
+
+# 编辑器 / 操作系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

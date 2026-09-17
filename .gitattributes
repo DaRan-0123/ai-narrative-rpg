@@ -1,0 +1,14 @@
+# 默认按文本处理，由 git 自行判断
+* text=auto
+
+# .bat 必须永远是 CRLF。
+# 系统里 core.autocrlf=true，不加这条的话 .bat 会以 LF 存进仓库；
+# git clone 能自动转回来，但从 GitHub 下载 ZIP 拿到的是仓库原始字节，
+# LF 的 .bat 在 cmd 里会解析出错（尤其是 goto / 多行 if）。
+*.bat text eol=crlf
+
+# 二进制，别做任何换行转换
+*.png binary
+*.jpg binary
+*.ico binary
+*.whl binary
