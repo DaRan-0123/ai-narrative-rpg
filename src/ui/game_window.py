@@ -25,6 +25,7 @@ from . import (FONT_FAMILY, COLOR_BG_TEXT, COLOR_BG_TEXT_ALT,
                SCALE,
                CARD_BG, CARD_OUTLINE, CARD_TITLE_FG)
 from ..engine import GameEngine
+from ..vocab import is_alone, is_world_event
 from ..game_state import GameState, MEMORY_CONSOLIDATE_THRESHOLD, parse_time_passed
 from ..api_client import call_main, call_main_json, call_lightweight, call_main_stream, set_debug_mode, is_debug_mode
 from ..prompts import (
@@ -639,7 +640,7 @@ class GameWindow(GameEngine):
         
         # 在场NPC
         scene_people = self.game.player_state.get("current_scene_people", "")
-        if scene_people and scene_people != "独自一人":
+        if not is_alone(scene_people):
             self.append_narrative(f"在场人物：{scene_people}")
         self.append_narrative("═" * 40)
         
@@ -1193,7 +1194,7 @@ class GameWindow(GameEngine):
         # 世界大事记
         text.insert(END, "【世界大事记】\n", "head")
         events = [f.get("content", "") for f in self.game.known_facts
-                  if isinstance(f, dict) and "世界事件" in str(f.get("source", ""))]
+                  if is_world_event(f)]
         if events:
             for ev in events[-10:]:
                 text.insert(END, f"• {ev}\n")

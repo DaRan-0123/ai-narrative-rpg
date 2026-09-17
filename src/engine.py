@@ -33,10 +33,22 @@ from .prompts import (
     P13_SYSTEM, build_p13_user,
     build_p14_prompts, build_p1_judge_user
 )
+from .vocab import (
+    normalize_far_direction, normalize_world_level,
+    is_absent, is_worldview_base, is_world_event,
+)
 
-# P12远方方位枚举（校验用，见 docs/p12_map_design.md 第五节）
-P12_FAR_DIRECTIONS = ("北", "东北", "东", "东南", "南", "西南", "西", "西北")
+# P12远方方位枚举在 src/vocab.py（校验用，见 docs/p12_map_design.md 第五节）
 P12_GRID_LIMIT = 10  # 坐标合法范围 [-10, 10]
+
+# 游戏助手查询类型判定关键字（英文小写；中文保留以兼容中文输入）
+RELATIONSHIP_KEYWORDS = (
+    "关系", "人际", "朋友", "敌人", "好感", "信任", "认识谁",
+    "和谁", "关系网", "社交", "人脉",
+    "relationship", "relationships", "friend", "friends", "enemy", "enemies",
+    "ally", "allies", "trust", "rapport", "attitude", "who do i know",
+    "social", "contacts", "network",
+)
 
 
 class NarrativeExtractor:
@@ -665,7 +677,7 @@ class GameEngine:
 
             # 季节迹象只记录为普通事实，不改变日历驱动的季节（v1简化）
             sign = extra.get("season_sign")
-            if isinstance(sign, str) and sign.strip() and sign.strip() not in ("无", "null", "None"):
+            if isinstance(sign, str) and not is_absent(sign):
                 self.game.add_fact({"content": f"季节迹象：{sign.strip()}", "source": "环境观察"})
         except Exception as e:
             # 失败原因必须打出来：只说"提取失败"的话，限流、断网、解析错、
@@ -695,9 +707,8 @@ class GameEngine:
                 return
             if not isinstance(data, dict) or not data.get("world_changed"):
                 return  # 无质变
-            level = str(data.get("change_level", ""))
-            if level not in ("世界级", "区域级", "社会级"):
-                return  # 个人级/其他不算世界质变
+            if not normalize_world_level(data.get("change_level", "")):
+                return  # 个人级/无变化/其他不算世界质变
             desc = str(data.get("change_description") or "").strip()
             if not desc:
                 return
@@ -735,8 +746,7 @@ class GameEngine:
                     break
                 if not isinstance(f, dict):
                     continue
-                src = str(f.get("source", ""))
-                if "世界观" in src or "世界事件" in src:
+                if is_worldview_base(f) or is_world_event(f):
                     continue
                 if f.get("confidence") == "high":
                     continue
@@ -978,9 +988,9 @@ class GameEngine:
             return ("none", result.get("reason", ""))
         # far：远方方位
         if "far" in result:
-            far = result["far"]
-            if far not in P12_FAR_DIRECTIONS:
-                raise ValueError(f"far值非法：「{far}」不在八方位枚举内")
+            far = normalize_far_direction(result["far"])
+            if not far:
+                raise ValueError(f"far值非法：「{result['far']}」不在八方位枚举内")
             return ("far", {"direction": far, "label": self._p12_short_label(result, location_name)})
         # 坐标：整数 + 不越界 + 不撞格 + icon_subject非空
         x, y = result.get("x"), result.get("y")
@@ -1088,10 +1098,7 @@ class GameEngine:
         try:
             # 判断查询类型
             query_lower = query.lower()
-            is_relationship_query = any(kw in query_lower for kw in [
-                "关系", "人际", "朋友", "敌人", "好感", "信任", "认识谁",
-                "和谁", "关系网", "社交", "人脉"
-            ])
+            is_relationship_query = any(kw in query_lower for kw in RELATIONSHIP_KEYWORDS)
 
             recent_history = self.game.get_recent_history(5)
 

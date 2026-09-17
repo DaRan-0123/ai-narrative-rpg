@@ -9,6 +9,7 @@ import threading
 from datetime import datetime
 from .save_manager import SaveManager
 from .config import get_config
+from .vocab import is_worldview_base
 
 # NPC档案写操作锁：保护异步任务（P4C记忆巩固）与主循环对npcs的并发修改
 # 锁定顺序约定：NPCS_LOCK 只用于内存字典修改（O(1)），持锁期间绝不调用API或写盘
@@ -77,6 +78,23 @@ def _cn_to_int(s):
     return None
 
 
+# English number words used by parse_time_passed. "half" is deliberately absent:
+# it is a fraction, not a count, and the fractions have dedicated branches below.
+_EN_NUM = {"a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+           "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10}
+
+
+def _en_to_num(s):
+    """English number word or decimal string to a number; None when unrecognized."""
+    s = s.strip().lower()
+    if s in _EN_NUM:
+        return _EN_NUM[s]
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+
 def select_facts_for_p1(known_facts, limit=40):
     """P1/P14注入用事实选取（纯函数，2026-08-14 截断策略）：
     known_facts 追加式增长，全量注入会让 P1 前缀越来越贵（HANDOVER 7.2.4）。
@@ -88,9 +106,8 @@ def select_facts_for_p1(known_facts, limit=40):
     if not known_facts or not isinstance(known_facts, list):
         return []
     limit = max(10, limit)
-    # 世界观基盘（低置信/无来源的世界观也保留——source按"世界观"匹配）
-    base = [f for f in known_facts
-            if (f.get("source") if isinstance(f, dict) else "") and "世界观" in str(f.get("source", ""))]
+    # 世界观基盘（低置信/无来源的世界观也保留）
+    base = [f for f in known_facts if is_worldview_base(f)]
     recent = list(known_facts[-limit:])
     picked = []
     seen = set()
@@ -117,44 +134,65 @@ def select_facts_for_p1(known_facts, limit=40):
 
 def parse_time_passed(text):
     """解析P3估算的本轮经过时间，返回折算天数（浮点，纯函数）
-    规则见 docs/season_weather_design.md 第五节；解析失败/缺失兜底0.25天"""
+    规则见 docs/season_weather_design.md 第五节；解析失败/缺失兜底0.25天
+
+    Understands both English and Chinese. English is what the model emits now;
+    Chinese is kept so pre-English saves and mixed output still parse."""
     if not text or not isinstance(text, str):
         return TIME_FALLBACK_DAYS
     t = text.strip()
+    tl = t.lower()
     # 第二天/次日/翌日（须在通用N天之前，防止"第二天"被"二天"误匹配为2天）
-    if any(k in t for k in ("第二天", "次日", "翌日")):
+    # "the next day" must likewise precede the generic N-days rule
+    if any(k in t for k in ("第二天", "次日", "翌日")) or \
+            re.search(r'\b(?:the\s+)?(?:next|following)\s+day\b', tl):
         return 1.0
-    # 半天（"半"不是数字，通用N天规则匹配不到）
-    if "半天" in t:
+    # 半天（"半"不是数字，通用N天规则匹配不到）/ half a day
+    if "半天" in t or re.search(r'\bhalf\s+an?\s+day\b', tl):
         return 0.5
-    # N天
-    m = re.search(r'([一二两三四五六七八九十\d]+)\s*天', t)
+    # N天 / N days
+    m = re.search(r'([一二两三四五六七八九十\d]+)\s*天', t) or \
+        re.search(r'\b([a-z]+|\d+(?:\.\d+)?)\s*days?\b', tl)
     if m:
         n = _cn_to_int(m.group(1))
+        if n is None:
+            n = _en_to_num(m.group(1))
         if n:
             return float(n)
-    # 一夜/一晚/整夜/通宵（按半天计）
-    if re.search(r'一夜|一晚|整夜|通宵', t):
+    # 一夜/一晚/整夜/通宵（按半天计）/ a night / overnight
+    if re.search(r'一夜|一晚|整夜|通宵', t) or \
+            re.search(r'\b(?:an?|one)\s+night\b|\bovernight\b|\ball\s+night\b', tl):
         return 0.5
-    # 半小时
-    if "半小时" in t:
+    # 半小时 / half an hour
+    if "半小时" in t or re.search(r'\bhalf\s+an?\s+hour\b|\b30\s+minutes?\b', tl):
         return 0.5 / 24.0
-    # N小时
-    m = re.search(r'([一二两三四五六七八九十\d]+)\s*(?:个)?\s*小时', t)
-    if m:
-        n = _cn_to_int(m.group(1))
-        if n:
-            return n / 24.0
     # N刻钟（1刻钟=0.25小时）
+    # a quarter hour / quarter of an hour —— 必须排在 N hours 之前：
+    # 中文的"刻钟"与"小时"是不同词，英文的 "quarter of an hour" 却含 "hour"，
+    # 否则会被通用规则当成"1小时"
     m = re.search(r'([一二两三四五六七八九十\d]+)\s*刻钟?', t)
     if m:
         n = _cn_to_int(m.group(1))
         if n:
             return n * 0.25 / 24.0
-    # N分钟
-    m = re.search(r'([一二两三四五六七八九十\d]+)\s*分钟', t)
+    if re.search(r'\b(?:a\s+)?quarter\s+(?:of\s+an?\s+)?hour\b', tl):
+        return 0.25 / 24.0
+    # N小时 / N hours
+    m = re.search(r'([一二两三四五六七八九十\d]+)\s*(?:个)?\s*小时', t) or \
+        re.search(r'\b([a-z]+|\d+(?:\.\d+)?)\s*hours?\b', tl)
     if m:
         n = _cn_to_int(m.group(1))
+        if n is None:
+            n = _en_to_num(m.group(1))
+        if n:
+            return n / 24.0
+    # N分钟 / N minutes
+    m = re.search(r'([一二两三四五六七八九十\d]+)\s*分钟', t) or \
+        re.search(r'\b([a-z]+|\d+(?:\.\d+)?)\s*minutes?\b', tl)
+    if m:
+        n = _cn_to_int(m.group(1))
+        if n is None:
+            n = _en_to_num(m.group(1))
         if n:
             return n / 60.0 / 24.0
     return TIME_FALLBACK_DAYS
