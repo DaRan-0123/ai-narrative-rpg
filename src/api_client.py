@@ -88,9 +88,10 @@ class APIClient:
             "max_tokens": 4096
         }
 
-        # DeepSeek V4 思考模式
-        if provider == "deepseek" and thinking:
-            payload["thinking"] = {"type": "enabled"}
+        # DeepSeek V4 思考模式。必须显式关：省略该字段时服务端默认开启思考，
+        # 而思考 token 计入 max_tokens，会把正文饿死成空响应/半截 JSON。
+        if provider == "deepseek":
+            payload["thinking"] = {"type": "enabled" if thinking else "disabled"}
 
         # 准备调试日志数据
         debug_request = {
@@ -129,8 +130,9 @@ class APIClient:
                 except (KeyError, IndexError, ValueError):
                     # 解析响应结构失败（如字段缺失）→ 视为失败返回，不重试（重发同一响应不会更好）
                     return f"API调用失败 (解析响应失败: {str(data)[:200]})", False
-                if content is None:
-                    # thinking 模式正文可能在 reasoning_content；content 为 null 视为空响应
+                if not content:
+                    # content 为 null 或空串都算空响应——空串同样无法解析，
+                    # 之前只拦 None，空串会被当成成功返回 ""，调用方 json.loads 才炸
                     last_error = "API返回空content（可能在reasoning_content中）"
                     if attempt < max_retries:
                         _time.sleep(0.5 * (attempt + 1))
@@ -241,8 +243,9 @@ class APIClient:
             "max_tokens": 4096,
             "stream": True
         }
-        if provider == "deepseek" and thinking:
-            payload["thinking"] = {"type": "enabled"}
+        # 同 call()：省略该字段等于开启思考，必须显式关
+        if provider == "deepseek":
+            payload["thinking"] = {"type": "enabled" if thinking else "disabled"}
 
         debug_request = {
             "url": url, "model": model, "provider": provider,
