@@ -9,7 +9,7 @@ import threading
 from datetime import datetime
 from .save_manager import SaveManager
 from .config import get_config
-from .vocab import is_worldview_base
+from .vocab import is_worldview_base, normalize_style
 
 # NPC档案写操作锁：保护异步任务（P4C记忆巩固）与主循环对npcs的并发修改
 # 锁定顺序约定：NPCS_LOCK 只用于内存字典修改（O(1)），持锁期间绝不调用API或写盘
@@ -151,7 +151,7 @@ def parse_time_passed(text):
     if "半天" in t or re.search(r'\bhalf\s+an?\s+day\b', tl):
         return 0.5
     # N天 / N days
-    m = re.search(r'([一二两三四五六七八九十\d]+)\s*天', t) or \
+    m = re.search(r'([一二两三四五六七八九十\d]+(?:\.[\d]+)?)\s*天', t) or \
         re.search(r'\b([a-z]+|\d+(?:\.\d+)?)\s*days?\b', tl)
     if m:
         n = _cn_to_int(m.group(1))
@@ -163,6 +163,20 @@ def parse_time_passed(text):
     if re.search(r'一夜|一晚|整夜|通宵', t) or \
             re.search(r'\b(?:an?|one)\s+night\b|\bovernight\b|\ball\s+night\b', tl):
         return 0.5
+    # N个半小时 / N and a half hours —— 必须排在下面"半小时"和通用 N hours 之前：
+    # "一个半小时"含"半小时"子串、"an hour and a half"含"an hour"子串，
+    # 否则会被当成 0.5 小时和 1 小时
+    m = re.search(r'([一二两三四五六七八九十\d]+(?:\.[\d]+)?)\s*个?半\s*(?:小时|钟头)', t)
+    if m:
+        n = _cn_to_int(m.group(1))
+        if n:
+            return (n + 0.5) / 24.0
+    m = re.search(r'\b(?:an?\s+|([a-z]+|\d+(?:\.\d+)?)\s+)hours?\s+and\s+a\s+half\b', tl) or \
+        re.search(r'\b([a-z]+|\d+(?:\.\d+)?)\s+and\s+a\s+half\s+hours?\b', tl)
+    if m:
+        n = 1 if m.group(1) is None else _en_to_num(m.group(1))
+        if n:
+            return (n + 0.5) / 24.0
     # 半小时 / half an hour
     if "半小时" in t or re.search(r'\bhalf\s+an?\s+hour\b|\b30\s+minutes?\b', tl):
         return 0.5 / 24.0
@@ -170,7 +184,7 @@ def parse_time_passed(text):
     # a quarter hour / quarter of an hour —— 必须排在 N hours 之前：
     # 中文的"刻钟"与"小时"是不同词，英文的 "quarter of an hour" 却含 "hour"，
     # 否则会被通用规则当成"1小时"
-    m = re.search(r'([一二两三四五六七八九十\d]+)\s*刻钟?', t)
+    m = re.search(r'([一二两三四五六七八九十\d]+(?:\.[\d]+)?)\s*刻钟?', t)
     if m:
         n = _cn_to_int(m.group(1))
         if n:
@@ -178,7 +192,7 @@ def parse_time_passed(text):
     if re.search(r'\b(?:a\s+)?quarter\s+(?:of\s+an?\s+)?hour\b', tl):
         return 0.25 / 24.0
     # N小时 / N hours
-    m = re.search(r'([一二两三四五六七八九十\d]+)\s*(?:个)?\s*小时', t) or \
+    m = re.search(r'([一二两三四五六七八九十\d]+(?:\.[\d]+)?)\s*(?:个)?\s*小时', t) or \
         re.search(r'\b([a-z]+|\d+(?:\.\d+)?)\s*hours?\b', tl)
     if m:
         n = _cn_to_int(m.group(1))
@@ -187,7 +201,7 @@ def parse_time_passed(text):
         if n:
             return n / 24.0
     # N分钟 / N minutes
-    m = re.search(r'([一二两三四五六七八九十\d]+)\s*分钟', t) or \
+    m = re.search(r'([一二两三四五六七八九十\d]+(?:\.[\d]+)?)\s*分钟', t) or \
         re.search(r'\b([a-z]+|\d+(?:\.\d+)?)\s*minutes?\b', tl)
     if m:
         n = _cn_to_int(m.group(1))
@@ -260,9 +274,12 @@ class GameState:
         self.known_facts = self.save_manager.load_known_facts()
         self.action_history = self.save_manager.load_action_history()
         self.settings = self.save_manager.load_settings()
-        # 叙事风格旧值迁移（2026-08-14）：'gritty写实' 已改名为 '冷硬写实'，读档时映射并落盘
-        if self.settings.get("narrative_style") == "gritty写实":
-            self.settings["narrative_style"] = "冷硬写实"
+        # 叙事风格归一化：旧档里的中文/历史名（'gritty写实'、'冷硬写实'…）统一成
+        # 英文规范值，否则界面下拉框匹配不上。见 src/vocab.py 的风格契约。
+        raw_style = self.settings.get("narrative_style")
+        style = normalize_style(raw_style)
+        if style and style != raw_style:
+            self.settings["narrative_style"] = style
             try:
                 self.save_manager.save_settings(self.settings)
             except Exception:

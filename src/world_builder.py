@@ -10,6 +10,7 @@ import json
 
 from .api_client import call_main_json
 from .game_state import GameState
+from .vocab import NARRATIVE_STYLES, normalize_style
 from .prompts import (P6_SYSTEM, build_p6_user, P8_SYSTEM, build_p8_user,
                       P9_SYSTEM, build_p9_user, P10_SYSTEM, build_p10_user)
 
@@ -70,6 +71,10 @@ def build_world(world_draft, on_progress=None):
             return None, None, None, f"世界生成失败: {result.get('error', '未知错误')}"
 
         world_options = result.get("world_options", {})
+        # P10 是外部边界：narrative_style 可能为 null、或模型漏成中文/自创词，
+        # 归一化成规范值再往下传（P7 提示词、settings、界面下拉框都用它）
+        world_options["narrative_style"] = (normalize_style(world_options.get("narrative_style"))
+                                            or NARRATIVE_STYLES[0])
         player_info = result.get("player_info", {})
 
         _p("正在设计角色...")
@@ -85,7 +90,7 @@ def build_world(world_draft, on_progress=None):
             result["world_details"] = {}
 
         settings = {
-            "narrative_style": world_options.get("narrative_style", "冷硬写实"),
+            "narrative_style": world_options.get("narrative_style", NARRATIVE_STYLES[0]),
             "assistant_tone": world_options.get("assistant_tone", "有人情味"),
             "perspective": world_options.get("perspective", "第二人称"),
             "difficulty": world_options.get("difficulty", "中立"),

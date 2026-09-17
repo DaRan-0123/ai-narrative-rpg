@@ -9,7 +9,7 @@ from .game_state import select_memories_for_p1, get_season_for_day
 
 # ===== P7: 开局世界初始化 =====
 P7_SYSTEM = """你是一位世界观构建专家。根据玩家选择的维度选项，生成一个完整的RPG世界设定。
-你必须用中文输出。输出必须是合法的JSON格式。"""
+You must write in English. Output must be valid JSON."""
 
 def build_p7_user(world_options, player_info):
     """
@@ -28,7 +28,7 @@ def build_p7_user(world_options, player_info):
 - 初始区域: {world_options.get('starting_area', '边境小镇')}
 
 【元设定】
-- 叙事风格: {world_options.get('narrative_style', '冷硬写实')}
+- 叙事风格: {world_options.get('narrative_style', 'Grim Realism')}
 - 系统助手语气: {world_options.get('assistant_tone', '有人情味')}
 - 视角: {world_options.get('perspective', '第二人称')}
 - 难度: {world_options.get('difficulty', '中立')}
@@ -40,17 +40,17 @@ def build_p7_user(world_options, player_info):
 
 请输出以下JSON格式：
 {{
-  "world_description": "世界观总体描述（300字左右）",
-  "social_framework": "社会结构描述（200字左右）",
-  "starting_area_description": "初始区域详细描述（300字左右）",
+  "world_description": "世界观总体描述（180-220个英文单词）",
+  "social_framework": "社会结构描述（120-150个英文单词）",
+  "starting_area_description": "初始区域详细描述（180-220个英文单词）",
   "initial_npcs": [
     {{
       "type": "npc",
       "name": "NPC名字",
-      "description": "NPC的简要描述（身份、外貌、当前在做什么，50字以内）"
+      "description": "NPC的简要描述（身份、外貌、当前在做什么，30-35个英文单词）"
     }}
   ],
-  "initial_situation": "主角的初始处境/开场叙事（200字左右，以第二人称写）",
+  "initial_situation": "主角的初始处境/开场叙事（120-150个英文单词，以第二人称写）",
   "initial_player_state": {{
     "current_location": "精确位置",
     "posture_action": "姿势和正在做的事",
@@ -73,7 +73,7 @@ def build_p7_user(world_options, player_info):
 P1_SYSTEM = """你是一位RPG游戏的事件记录员。你的任务是客观陈述玩家的所见所闻所感，不包含多余的文学修饰。
 
 核心规则：
-1. 用中文输出，必须是合法的JSON格式
+1. Write in English; output must be valid JSON
 2. 叙事风格保持冷静、克制、客观，像目击者记录事件一样陈述事实
 3. NPC的行为基于其心理日志和性格设定
 4. 玩家状态文本的所有字段必须填满，不能留空
@@ -264,7 +264,7 @@ def build_p1_user(world_template, player_state, action_history, known_facts_summ
 【世界具体细节】{details_text if details_text else "（暂无详细记录）"}
 
 【元设定】
-- 叙事风格: {settings.get('narrative_style', '冷硬写实')}（注意：无论选择什么风格，叙事必须基于客观事实，禁止比喻、拟人、象征等修辞）
+- 叙事风格: {settings.get('narrative_style', 'Grim Realism')}（注意：无论选择什么风格，叙事必须基于客观事实，禁止比喻、拟人、象征等修辞）
 - 视角: {settings.get('perspective', '第二人称')}
 
 【当前区域】
@@ -304,7 +304,7 @@ def build_p1_user(world_template, player_state, action_history, known_facts_summ
     "physical_health": "身体和精力状态，必须非空",
     "transportation": "交通工具，必须非空（如'无（步行）'）",
     "weather_environment": "天气和环境，必须非空",
-    "current_scene_people": "当前场景中可感知的人，必须非空",
+    "current_scene_people": "当前场景中可感知的人，必须非空；场景里只有主角一人时，原样填 \"alone\"",
     "game_season": "当前季节（如'春季''夏季''秋季''冬季'），可选但建议填写",
     "game_time": "当前时间（如'清晨''正午''傍晚''深夜'），可选但建议填写",
     "appearance": "主角当前外貌和衣着描述，可选但建议填写"
@@ -327,7 +327,7 @@ def build_p1_user(world_template, player_state, action_history, known_facts_summ
 5. npc_notes只记录有明显变化的NPC，无变化可以不写
 6. 叙事必须客观：你看到什么就写什么，不要推测NPC在想什么，不要用比喻、拟人、象征
 7. 对话使用引号直接写出，不要添加"他用颤抖的声音说"这类多余描述，除非玩家能看出对方确实在颤抖
-8. 每轮叙事控制在200字以内，简洁高效
+8. 每轮叙事控制在 120-150 个英文单词，简洁高效
 9. new_entities规则（极其重要）：
    - 只返回不在【在场NPC档案】中、且对剧情有实际推动作用的新角色
    - 路人、背景人群、一次性出现的商贩等次要角色不要返回
@@ -345,7 +345,8 @@ P2_SYSTEM = """你是玩家的系统助手。你的任务是基于已知信息�
 3. 你绝对不能推测、编造、或基于常识补充未记录的信息
 4. 你的回答应该简洁直接
 5. 你可以引用事实的来源（如果有记录）
-6. 如果玩家问的是游戏机制相关问题（如"怎么存档"），你可以基于游戏规则回答"""
+6. 如果玩家问的是游戏机制相关问题（如"怎么存档"），你可以基于游戏规则回答
+7. Write in English"""
 
 
 def build_p2_user(known_facts, action_history_recent, player_query, player_state=None):
@@ -414,11 +415,11 @@ P3_SYSTEM = """你是一位信息提取专家。你的任务是从一段叙事�
 2. 事实应该是具体的、可验证的陈述
 3. 不要提取推测、感受、或叙事修饰
 4. 输出必须是合法的JSON对象格式
-5. time_passed根据叙事中的动作量估算：说几句话约一刻钟、短互动约1-2小时、赶路半天起、过夜填"一夜"
+5. time_passed必须用英文短语，根据叙事中的动作量估算：说几句话约 "a quarter hour"、短互动约 "an hour" 到 "two hours"、赶路 "half a day" 起、过夜填 "a night"
 6. 天气默认延续上一轮：只有叙事中明确描写了天气变化（如雨停、起风、云散开），weather.changed才允许为true，且reason必须引用叙事依据；否则changed=false
 7. weather.current无变化时一字不改照抄：当changed=false时，weather.current必须与【上一轮天气】完全相同、一字不改；只有叙事明确描写天气变化（changed=true）时才允许改写current内容
-8. season_sign只记录叙事中明确提到的季节性自然迹象（如落叶、积雪、蝉鸣），不要推测，没有填"无"
-9. 用中文"""
+8. season_sign只记录叙事中明确提到的季节性自然迹象（如落叶、积雪、蝉鸣），不要推测，没有填 "none"
+9. Write in English"""
 
 
 def build_p3_user(narrative_text, current_weather=None):
@@ -441,9 +442,9 @@ def build_p3_user(narrative_text, current_weather=None):
   "facts": [
     {{"content": "事实内容", "confidence": "high|medium|low", "source": "叙事中该事实的来源（如'NPC杰克口述'、'玩家观察'）"}}
   ],
-  "time_passed": "本轮经过的游戏时间估算（如'约2小时'、'半天'、'一夜'、'两天'）",
-  "weather": {{"current": "本轮结束时的天气", "changed": true或false, "reason": "变化依据（引用叙事原文），未变化填'无变化'"}},
-  "season_sign": "叙事中明确出现的季节迹象，没有填'无'"
+  "time_passed": "本轮经过的游戏时间估算（英文短语，如 'about 2 hours'、'half a day'、'a night'、'two days'）",
+  "weather": {{"current": "本轮结束时的天气", "changed": true或false, "reason": "变化依据（引用叙事原文），未变化填 'none'"}},
+  "season_sign": "叙事中明确出现的季节迹象，没有填 'none'"
 }}
 
 注意：
@@ -468,7 +469,7 @@ P4_SYSTEM = """你是一位角色心理分析专家。基于NPC的原有设定�
 5. memory_entry只记"对NPC有意义的互动"：日常寒暄、点头之交、无信息量的客套一律记null
 6. memory_entry中perception是NPC对该事件的主观解读（如"觉得这人靠得住"），不是客观事实的复述
 7. importance评级标准（1-5）：5=救命之恩/重大背叛，4=大恩惠/大冲突，3=有意义的交谈，2=轻微摩擦，1=一面之缘
-8. 用中文"""
+8. Write in English"""
 
 
 def build_p4_user(npc_data, event_description):
@@ -509,7 +510,7 @@ def build_p4_user(npc_data, event_description):
     "event": "本轮互动中值得NPC记住的客观事件（一句话）",
     "perception": "NPC对此的主观解读（一句话，体现其性格和立场）",
     "importance": "1-5的整数（5=救命/背叛，4=大恩惠/大冲突，3=有意义的交谈，2=轻微摩擦，1=一面之缘）",
-    "tags": ["主题标签，如恩惠/冲突/金钱/承诺"]
+    "tags": ["主题标签（英文），如 favor/conflict/money/promise"]
   }}
 }}
 
@@ -523,7 +524,7 @@ P4C_SYSTEM = """你是一位记忆整理专家。你的任务是把一个NPC的�
 1. 输出必须是合法的JSON格式，只输出一条记忆
 2. 概述要保留对NPC有持续意义的信息（如玩家的一贯行为模式、总体印象），丢弃纯寒暄细节
 3. event是这段时期的客观概述，perception是NPC对这段时期的主观总结
-4. 用中文"""
+4. Write in English"""
 
 
 def build_p4c_user(npc_name, old_memories):
@@ -545,7 +546,7 @@ def build_p4c_user(npc_name, old_memories):
   "event": "时期概述（如'第5-20轮：玩家多次来买药，渐渐熟络'）",
   "perception": "NPC对这段时期的总体主观印象（一句话）",
   "importance": 2,
-  "tags": ["概述"]
+  "tags": ["overview"]
 }}"""
 
 
@@ -553,7 +554,7 @@ def build_p4c_user(npc_name, old_memories):
 P6_SYSTEM = """你是一位剧情架构师。当游戏中出现新角色时，你的任务是基于当前世界状态和已有剧情，为新角色设计完整的背景故事、秘密、以及他与现有角色/势力的关系网。
 
 核心规则：
-1. 用中文输出，必须是合法的JSON格式
+1. Write in English; output must be valid JSON
 2. 新角色的背景必须与现有世界观自洽
 3. 新角色与现有角色或势力的关联由AI自行判断——如果当前场景和剧情自然需要关联，则设计关联；如果该角色是独立出现的过客，也可以没有关联
 4. 秘密不是必须的——如果该角色有隐藏的动机、身份或掌握的关键信息，可以设计秘密；如果只是普通路人，可以没有秘密
@@ -565,9 +566,9 @@ P6_SYSTEM = """你是一位剧情架构师。当游戏中出现新角色时，�
   "npc_id": "npc_XXX",
   "name": "角色名字（可以带绰号）",
   "role": "身份/职业/社会地位",
-  "appearance": "外貌描述（100字以内，要有辨识度）",
+  "appearance": "外貌描述（60-70个英文单词，要有辨识度）",
   "personality": "性格特点（3-5个关键词+一句话展开）",
-  "background": "背景故事（200字以内，包含：出身、关键经历、当前处境）",
+  "background": "背景故事（120-150个英文单词，包含：出身、关键经历、当前处境）",
   "relationship_to_player": "与主角的初始关系（可以是直接的，也可以是间接的）",
   "relationships": {
     "现有角色名": "与该角色的具体关系描述（如有关联）",
@@ -578,7 +579,7 @@ P6_SYSTEM = """你是一位剧情架构师。当游戏中出现新角色时，�
   "plot_hooks": [
     "该角色可以引发的剧情线索（如有）"
   ],
-  "narrative_integration": "该角色如何自然融入当前场景的描述（50字以内）"
+  "narrative_integration": "该角色如何自然融入当前场景的描述（30-35个英文单词）"
 }
 
 重要提示：
@@ -636,7 +637,7 @@ def build_p6_user(world_template, existing_npcs, current_narrative, new_entity_d
 P8_SYSTEM = """你是一位世界细节架构师。基于已有的宏观世界观设定，你需要补充具体的制度、经济、政治、文化等细节，让这个世界变得真实可触。
 
 核心规则：
-1. 用中文输出，必须是合法的JSON格式
+1. Write in English; output must be valid JSON
 2. 所有细节必须与P7给出的世界观自洽，不能矛盾
 3. 如果某个维度在当前世界不适用（如无政府状态没有"统治者"），输出null或空数组，不要硬编
 4. 细节要具体、有辨识度，避免泛泛而谈
@@ -768,14 +769,15 @@ def build_p8_user(world_template, world_options, player_info):
 P5_SYSTEM = """你是一位世界状态分析师。你的任务是判断一段叙事是否导致了世界的实质性变化，并在发生时同步改写世界总述。
 
 核心规则：
-1. 用中文输出，必须是合法的JSON格式
+1. Write in English; output must be valid JSON
 2. 只基于叙事中的客观依据判断，不脑补、不夸大
-3. 变化级别判定：
-   - 世界级: 整个社会/世界规则发生改变（如帝国覆灭、魔法体系崩溃）
-   - 区域级: 某个城市/区域发生质变（如城镇被毁、区域政权更替）
-   - 社会级: 社会结构/重要组织发生变化（如公会解散、企业破产）
-   - 个人级: 只影响个人或少数人，不算世界变化
-4. 只有世界级/区域级/社会级才算 world_changed=true；个人级/无变化为 false
+3. 变化级别判定（change_level 必须原样使用下列英文单词，不得译成中文）：
+   - world: 整个社会/世界规则发生改变（如帝国覆灭、魔法体系崩溃）
+   - region: 某个城市/区域发生质变（如城镇被毁、区域政权更替）
+   - society: 社会结构/重要组织发生变化（如公会解散、企业破产）
+   - individual: 只影响个人或少数人，不算世界变化
+   - none: 无变化
+4. 只有 world/region/society 才算 world_changed=true；individual/none 为 false
 5. **世界观改写必须保守（最重要）**：
    - 未发生质变（world_changed=false）时，updated_world_description 必须一字不改地原样输出【当前世界设定（完整）】的全文，不得有任何增删改动
    - 发生质变时，只在原有世界总述基础上做最小幅度的补充：把新质变的事实自然加进相应位置，**保留原有设定的所有字句与基调**，绝不推翻、不重写、不润色原文
@@ -790,15 +792,16 @@ def build_p5_user(world_template, narrative_text):
 {narrative_text}
 
 请判断本轮叙事是否导致了以下级别的世界变化：
-- 世界级: 整个社会/世界规则发生改变（如帝国覆灭、魔法体系崩溃）
-- 区域级: 某个城市/区域发生质变（如城镇被毁、区域政权更替）
-- 社会级: 社会结构/重要组织发生变化（如公会解散、企业破产）
-- 个人级: 只影响个人或少数人，不算世界变化
+- world: 整个社会/世界规则发生改变（如帝国覆灭、魔法体系崩溃）
+- region: 某个城市/区域发生质变（如城镇被毁、区域政权更替）
+- society: 社会结构/重要组织发生变化（如公会解散、企业破产）
+- individual: 只影响个人或少数人，不算世界变化
+- none: 无变化
 
 输出JSON：
 {{
   "world_changed": true或false,
-  "change_level": "世界级|区域级|社会级|个人级|无",
+  "change_level": "world|region|society|individual|none",
   "change_description": "如果发生变化，描述变化内容；无变化则为null",
   "affected_areas": ["受影响的区域名称列表"],
   "reasoning": "判定理由（一句话）",
@@ -810,13 +813,13 @@ def build_p5_user(world_template, narrative_text):
 P11_SYSTEM = """你是一位故事架构师。你的任务是维护一份长期剧情线清单，让游戏世界的叙事有方向感，而不是纯粹被动响应玩家。
 
 核心规则：
-1. 用中文输出，必须是合法的JSON格式
+1. Write in English; output must be valid JSON
 2. 剧情线的伏笔来源：NPC的plot_hooks、NPC的秘密与记忆、近期事件——优先兑现已有伏笔，不要凭空捏造与现有设定无关的大事件
 3. next_beat必须是具体可演的剧情节点（如"打听者再次现身，留下约见的口信"），不是空泛口号（如"矛盾升级""真相逼近"）
 4. status判定：active=玩家正在卷入或近期有推进的线；dormant=玩家长期不碰的线（不删除，以后可复活）；resolved=已被玩家解决或彻底失去意义的线
 5. active状态的线最多3条，优先保留与玩家当前处境最相关的
 6. 剧情线是背景推力不是强制剧本，设计next_beat时要允许玩家自由选择走向
-7. stage用四字以内的阶段描述（如"萌芽""发酵中""高潮前"）"""
+7. stage用不超过 3 个英文单词的阶段描述（如 "seedling"、"fermenting"、"pre-climax"）"""
 
 
 def build_p11_user(existing_threads, history_summary, npc_hooks, recent_facts,
@@ -860,9 +863,9 @@ def build_p11_user(existing_threads, history_summary, npc_hooks, recent_facts,
   "threads": [
     {{
       "id": "已有线保持原id，新线用thread_XXX新id",
-      "title": "剧情线标题（十字以内）",
+      "title": "剧情线标题（不超过8个英文单词）",
       "summary": "这条线的来龙去脉（一两句话）",
-      "stage": "阶段（四字以内）",
+      "stage": "阶段（不超过3个英文单词）",
       "next_beat": "下一个具体可演的剧情节点",
       "involved": ["相关NPC或玩家名字"],
       "status": "active|dormant|resolved"
@@ -901,7 +904,7 @@ P12_SYSTEM = """你是"地图师"（P12），负责把叙事文本中主角实�
 6. 坐标必须在 [-10,10] 内
 7. name 字段必须原样回显【待安置的新地点】给出的地点名，不得改写、不得另行编造
 8. 若【已有地点】为空（即这是第一个上图的地理位置），坐标一定是 (0,0)，不得选其他格子
-9. label 字段是地图上的显示用名：从地点名中提取最核心、最简洁的叫法，建议7字以内
+9. label 字段是地图上的显示用名：从地点名中提取最核心、最简洁的叫法，建议不超过 4 个英文单词
    （如"安塔利亚南区，港湾憩所旅店一楼大堂" → "港湾憩所旅店"）；地名本身就短则原样使用
 
 【icon_subject 规则】（仅坐标输出时需要）
@@ -911,12 +914,14 @@ P12_SYSTEM = """你是"地图师"（P12），负责把叙事文本中主角实�
 - 非建筑地点描述主体物（如"中央有喷泉的小广场"）
 - 不要人物、不要文字招牌
 
+name / label / icon_subject 都必须用英文书写。
+
 【输出】只输出一个 JSON 对象，三选一，不要输出其他内容：
-{"name": "地点名", "label": "地图显示名（7字内）", "x": 整数, "y": 整数, "icon_subject": "建筑外观描述", "reason": "依据原文哪句话（30字内）"}
+{"name": "地点名", "label": "地图显示名（不超过4个英文单词）", "x": 整数, "y": 整数, "icon_subject": "建筑外观描述", "reason": "依据原文哪句话（不超过20个英文单词）"}
 或
-{"name": "地点名", "label": "地图显示名（7字内）", "far": "北/东北/东/东南/南/西南/西/西北 之一", "reason": "依据（30字内）"}
+{"name": "地点名", "label": "地图显示名（不超过4个英文单词）", "far": "north|northeast|east|southeast|south|southwest|west|northwest 之一", "reason": "依据（不超过20个英文单词）"}
 或
-{"name": "地点名", "none": true, "reason": "主角未到达，仅被提及（30字内）"}"""
+{"name": "地点名", "none": true, "reason": "主角未到达，仅被提及（不超过20个英文单词）"}"""
 
 
 def build_p12_user(existing_places, snippet, current_location, target_location):
@@ -959,7 +964,9 @@ P13_SYSTEM = """你是"风险门"（P13），只判断一件事：玩家这个�
 危险动作（攀爬/跳跃/追逐）、对抗权威、需要技能的精密操作、违背角色身体条件的尝试
 例："我把他们三个打趴"、"我说服债主免债"、"我撬开锁"、"我跳过屋顶"
 
-只输出JSON：{"risk": true/false, "reason": "15字内"}"""
+reason 必须用英文书写。
+
+只输出JSON：{"risk": true/false, "reason": "不超过10个英文单词"}"""
 
 
 def build_p13_user(player_input, player_state):
@@ -984,8 +991,10 @@ P14_SYSTEM = """你是"辩方分析员"（P14），立场：{role}。
 - 【事实硬约束（2026-08-05 用户定）】只许使用输入中给定的事实（角色状态、场景人物、已知事实摘要、动作文本本身）；
   禁止编造输入中不存在的机构、人物、事件、规则、凭据（如不得虚构"委员会吊销执照""被警方通缉"这类无出处的后果）。
   唯一允许的推演是无可争议的物理常识（如"醉酒者平衡差""老人爆发力弱"），且必须能指明由哪条给定事实推出
-- 每条一句话，15-25字，最多{max_items}条，按重要性排序
+- 每条一句话，不超过15个英文单词，最多{max_items}条，按重要性排序
 - {extra}
+
+items 里的每一条都必须用英文书写。
 
 只输出JSON：{{"items": ["...", "..."]}}"""
 
@@ -1059,10 +1068,10 @@ def build_p1_judge_user(p1_user_text, advantages, disadvantages):
 P9_SYSTEM = """你是一位RPG世界创建向导。你的任务是通过与玩家的对话，引导他们逐步完善世界设定。
 
 核心规则：
-1. 用中文输出，必须是合法的JSON格式
+1. Write in English; output must be valid JSON
 2. 你的回复应该友好、有启发性，像一位有经验的DM（地下城主）
 3. 每次回复后，更新当前已确定的世界设定表格
-4. 如果玩家说"我已经说完了"、"就这样吧"、"开始游戏"等，设置is_done为true
+4. 如果玩家说"我已经说完了"、"就这样吧"、"开始游戏"等，或英文的 "I'm done"、"that's it"、"let's begin"、"start the game" 等，设置is_done为true
 5. 不要一次性问太多问题，每次只聚焦1-2个维度
 6. **追根问底（最重要）**：对于任何还没有被玩家明确、具体确认的维度，一律保持null，绝不猜测、绝不自行脑补填写；宁可追问也不填充模糊值。只有玩家亲口给出了具体设定时，才把该维度填入world_draft
 7. 追问要具体：当玩家给的描述含糊、笼统（如"科技比较发达""魔法世界"）时，追问具体细节（如"魔法是每个人都会，还是只有少数人掌握？""科技大概什么时代水平？蒸汽？电气？"），直到能得到明确的答案
@@ -1080,7 +1089,7 @@ P9_SYSTEM = """你是一位RPG世界创建向导。你的任务是通过与玩�
     "order": "已确定的社会秩序，未确定则为null",
     "morality": "已确定的道德氛围，未确定则为null",
     "starting_area": "已确定的初始区域，未确定则为null",
-    "narrative_style": "已确定的叙事风格，未确定则为null",
+    "narrative_style": "已确定的叙事风格，必须是 Grim Realism / Poetic / Plain / Ornate / Stream of Consciousness 之一（原样照抄，不得改写）；未确定则为null",
     "assistant_tone": "已确定的助手语气，未确定则为null",
     "perspective": "已确定的视角，未确定则为null",
     "difficulty": "已确定的难度，未确定则为null",
@@ -1128,9 +1137,12 @@ def build_p9_user(conversation_history, player_input):
 # ===== P10: 世界创建完成器（对话结束后调用）=====
 P10_SYSTEM = """你是一位世界创建完成器。当玩家完成对话后，你的任务是根据收集到的世界设定草稿，生成完整的P7格式世界数据。
 
-你必须用中文输出。输出必须是合法的JSON格式。
+You must write in English. Output must be valid JSON.
 
-如果某些维度未确定，你需要基于已确定的维度进行合理推断和补充。"""
+如果某些维度未确定，你需要基于已确定的维度进行合理推断和补充。
+
+narrative_style 必须是下列五个英文值之一，原样照抄，不得译成中文、不得自创：
+Grim Realism / Poetic / Plain / Ornate / Stream of Consciousness"""
 
 
 def build_p10_user(world_draft):
@@ -1163,17 +1175,17 @@ def build_p10_user(world_draft):
     "appearance": "...",
     "background": "..."
   }},
-  "world_description": "世界观总体描述（300字左右）",
-  "social_framework": "社会结构描述（200字左右）",
-  "starting_area_description": "初始区域详细描述（300字左右）",
+  "world_description": "世界观总体描述（180-220个英文单词）",
+  "social_framework": "社会结构描述（120-150个英文单词）",
+  "starting_area_description": "初始区域详细描述（180-220个英文单词）",
   "initial_npcs": [
     {{
       "type": "npc",
       "name": "NPC名字",
-      "description": "NPC的简要描述（50字以内）"
+      "description": "NPC的简要描述（30-35个英文单词）"
     }}
   ],
-  "initial_situation": "主角的初始处境/开场叙事（200字左右，以第二人称写）",
+  "initial_situation": "主角的初始处境/开场叙事（120-150个英文单词，以第二人称写）",
   "initial_player_state": {{
     "current_location": "精确位置",
     "posture_action": "姿势和正在做的事",

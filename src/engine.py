@@ -347,7 +347,7 @@ class GameEngine:
                             return merged_npc
                         else:
                             # P6失败，回退
-                            entity["role"] = entity.get("description", "未知身份")[:30]
+                            entity["role"] = entity.get("description", "未知身份")[:60]
                             entity["appearance"] = entity.get("description", "")
                             entity["personality"] = "未知"
                             entity["background"] = "未知"
@@ -356,7 +356,7 @@ class GameEngine:
                             return entity
                     except Exception:
                         # 异常回退
-                        entity["role"] = entity.get("description", "未知身份")[:30]
+                        entity["role"] = entity.get("description", "未知身份")[:60]
                         entity["appearance"] = entity.get("description", "")
                         entity["personality"] = "未知"
                         entity["background"] = "未知"
@@ -1010,16 +1010,16 @@ class GameEngine:
 
     @staticmethod
     def _p12_short_label(result, location_name):
-        """显示/叙事用短名：优先P12给的label（建议7字内，2026-08-04 用户定）；
+        """显示/叙事用短名：优先P12给的label（建议4个英文单词内，2026-08-04 用户定）；
         缺失时退回兜底——取地名最后一个逗号分段"""
         label = str(result.get("label") or "").strip()
         if label:
-            if len(label) > 7:
-                print(f"[地图] 提示：label「{label}」超过7字（建议值，不拦截）")
+            if len(label.split()) > 4:
+                print(f"[地图] 提示：label「{label}」超过4个单词（建议值，不拦截）")
             return label
         import re as _re
         parts = [p for p in _re.split(r"[，,、]", location_name) if p]
-        return (parts[-1] if parts else location_name)[:10]
+        return (parts[-1] if parts else location_name)[:24]
 
     def _run_p12(self, location_name, narrative):
         """后台线程：P12定位 → 校验 → 落库（2026-08-14地图半封存：图标生成/渲染已封存）"""

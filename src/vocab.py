@@ -77,6 +77,35 @@ def is_alone(scene_people):
     return (not t) or t in _ALONE
 
 
+# ===== narrative style =====
+# These five strings are simultaneously the wizard dropdown values, the value
+# persisted in the save file, and the text injected into P1/P7. They are the
+# canonical spelling; the Chinese names are the legacy ones.
+NARRATIVE_STYLES = ("Grim Realism", "Poetic", "Plain", "Ornate", "Stream of Consciousness")
+
+_STYLE_ALIASES = {
+    "grim realism": "Grim Realism", "grimrealism": "Grim Realism",
+    "hardboiled": "Grim Realism", "cold realism": "Grim Realism",
+    "冷硬写实": "Grim Realism",
+    "gritty写实": "Grim Realism",   # pre-2026-08-14 name, still in old saves
+    "poetic": "Poetic", "poetic beauty": "Poetic", "诗意优美": "Poetic",
+    "plain": "Plain", "plain and concise": "Plain", "spare": "Plain",
+    "objective": "Plain", "客观简洁": "Plain",
+    "ornate": "Ornate", "flowery": "Ornate", "literary": "Ornate",
+    "华丽文学": "Ornate",
+    "stream of consciousness": "Stream of Consciousness",
+    "streamofconsciousness": "Stream of Consciousness",
+    "consciousness": "Stream of Consciousness",
+    "意识流": "Stream of Consciousness",
+}
+
+
+def normalize_style(value):
+    """Canonical narrative style, or "" when the value is not one of the five."""
+    token = re.sub(r"[\s\-_]", " ", str(value or "").strip().lower())
+    return _STYLE_ALIASES.get(token, _STYLE_ALIASES.get(token.replace(" ", ""), ""))
+
+
 # ===== fact.source / fact.category =====
 # Not player-visible, but source is echoed into the P2 prompt ("（来源: …）")
 # and both are matched by the P1 fact selector and the fact compactor.

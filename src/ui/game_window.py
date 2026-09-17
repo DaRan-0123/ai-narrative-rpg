@@ -25,7 +25,7 @@ from . import (FONT_FAMILY, COLOR_BG_TEXT, COLOR_BG_TEXT_ALT,
                SCALE,
                CARD_BG, CARD_OUTLINE, CARD_TITLE_FG)
 from ..engine import GameEngine
-from ..vocab import is_alone, is_world_event
+from ..vocab import NARRATIVE_STYLES, is_alone, is_world_event
 from ..game_state import GameState, MEMORY_CONSOLIDATE_THRESHOLD, parse_time_passed
 from ..api_client import call_main, call_main_json, call_lightweight, call_main_stream, set_debug_mode, is_debug_mode
 from ..prompts import (
@@ -45,11 +45,11 @@ from ..prompts import (
 
 # 叙事风格下拉悬停解释（2026-08-14）：鼠标移到选项上时右侧悬浮显示
 STYLE_DESCRIPTIONS = {
-    "冷硬写实": "冷硬写实，聚焦泥泞、尘土与真实代价；客观陈述所见，不带抒情",
-    "诗意优美": "文笔细腻，多用意象与留白，字里行间有诗意的余味",
-    "客观简洁": "白描为主，三言两语交代事实，信息密度高、节奏快",
-    "华丽文学": "辞藻铺陈、句式讲究，讲究氛围与画面感的浓墨重彩",
-    "意识流": "贴近角色的感官与思绪流转，跳跃联想，主观色彩浓",
+    "Grim Realism": "冷硬写实，聚焦泥泞、尘土与真实代价；客观陈述所见，不带抒情",
+    "Poetic": "文笔细腻，多用意象与留白，字里行间有诗意的余味",
+    "Plain": "白描为主，三言两语交代事实，信息密度高、节奏快",
+    "Ornate": "辞藻铺陈、句式讲究，讲究氛围与画面感的浓墨重彩",
+    "Stream of Consciousness": "贴近角色的感官与思绪流转，跳跃联想，主观色彩浓",
 }
 
 
@@ -350,9 +350,9 @@ class GameWindow(GameEngine):
         style_frame = ttk.Frame(self.info_bar)
         style_frame.pack(side=LEFT, padx=_s(20))
         ttk.Label(style_frame, text="叙事风格:", font=FONT_TOP).pack(side=LEFT)
-        self.style_var = tk.StringVar(value=self.game.settings.get("narrative_style", "冷硬写实"))
+        self.style_var = tk.StringVar(value=self.game.settings.get("narrative_style", NARRATIVE_STYLES[0]))
         self.style_combo = ttk.Combobox(style_frame, textvariable=self.style_var,
-                                         values=["冷硬写实", "诗意优美", "客观简洁", "华丽文学", "意识流"],
+                                         values=list(NARRATIVE_STYLES),
                                          width=_s(12), state="readonly")
         self.style_combo.pack(side=LEFT, padx=(_s(5), _s(0)))
         self.style_combo.bind("<<ComboboxSelected>>", self.on_style_changed)
@@ -625,9 +625,9 @@ class GameWindow(GameEngine):
         
         self.append_narrative("【世界概况】")
         if world_desc:
-            self.append_narrative(world_desc[:400])
+            self.append_narrative(world_desc[:900])
         if social_fw:
-            self.append_narrative(f"社会形态：{social_fw[:300]}")
+            self.append_narrative(f"社会形态：{social_fw[:700]}")
         self.append_narrative("═" * 40)
         
         # === 当前位置 ===
@@ -635,7 +635,7 @@ class GameWindow(GameEngine):
 
         self.append_narrative("【你在哪】")
         if area_desc:
-            self.append_narrative(area_desc[:400])
+            self.append_narrative(area_desc[:900])
         self.append_narrative(f"当前位置：{loc}")
         
         # 在场NPC
@@ -732,7 +732,7 @@ class GameWindow(GameEngine):
             f"⚠ 你正在进行一个有风险的尝试" + (f"（{reason}）" if reason else ""),
             tag="error")
         # 确认条：动作摘要（截断防爆版）+ 两个抉择按钮
-        action_brief = user_input if len(user_input) <= 30 else user_input[:30] + "…"
+        action_brief = user_input if len(user_input) <= 60 else user_input[:60] + "…"
         self.risk_label.config(text=f"「{action_brief}」要冒险试试吗？")
         self._risk_action = user_input
         if not self.risk_frame.winfo_ismapped():
